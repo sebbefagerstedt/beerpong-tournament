@@ -1,36 +1,34 @@
 <!DOCTYPE html>
-
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🍺 BEER PONG TURNERING</title>
+<title>🍺 BEER PONG TURNERINGEN</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0d0d0d; --card: #161616; --border: #2a2a2a;
-    --amber: #f5a623; --amber-glow: rgba(245,166,35,0.12);
-    --green: #39d353; --red: #ff4d4d; --muted: #555; --text: #e8e0d0;
-  }
+ :root {
+ --bg: #0d0d0d; --card: #161616; --border: #2a2a2a;
+ --amber: #f5a623; --amber-glow: rgba(245,166,35,0.12);
+ --green: #39d353; --red: #ff4d4d; --muted: #555; --text: #e8e0d0;
+ }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
 background: var(--bg); color: var(--text);
-font-family: ‘DM Mono’, monospace; min-height: 100vh; overflow-x: hidden;
+font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden;
 }
 
 body::before {
-content: ‘’; position: fixed; inset: 0;
-background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 200 200’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘n’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.85’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23n)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+content: ''; position: fixed; inset: 0;
+background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 pointer-events: none; z-index: 1000; opacity: 0.4;
 }
 
-/* ── HEADER ── */
 header { text-align: center; padding: 2rem 1rem 1.2rem; border-bottom: 1px solid var(--border); }
 
 header h1 {
-font-family: ‘Bebas Neue’, cursive;
+font-family: 'Bebas Neue', cursive;
 font-size: clamp(3rem, 10vw, 5.5rem);
 letter-spacing: 0.05em; color: var(--amber);
 text-shadow: 0 0 60px rgba(245,166,35,0.35); line-height: 1;
@@ -38,7 +36,6 @@ text-shadow: 0 0 60px rgba(245,166,35,0.35); line-height: 1;
 
 header p { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.35rem; }
 
-/* ── TOP BAR (progress only) ── */
 #top-bar {
 display: flex; align-items: center; justify-content: space-between;
 gap: 1rem; padding: 0.6rem 1.2rem;
@@ -54,9 +51,8 @@ text-transform: uppercase; color: var(--muted); white-space: nowrap;
 .top-progress-wrap { flex: 1; max-width: 340px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
 #top-progress { height: 100%; width: 0%; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
 
-/* ── BUTTONS ── */
 .btn {
-font-family: ‘DM Mono’, monospace;
+font-family: 'DM Mono', monospace;
 font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase;
 padding: 0.42rem 1rem;
 border: 1px solid var(--amber); background: transparent; color: var(--amber);
@@ -64,21 +60,19 @@ cursor: pointer; border-radius: 2px; transition: all 0.15s; white-space: nowrap;
 }
 .btn:hover { background: var(--amber); color: #000; }
 .btn.sm { font-size: 0.65rem; padding: 0.3rem 0.7rem; }
-.btn.danger  { border-color: var(--red);   color: var(--red);   }
-.btn.danger:hover  { background: var(--red);   color: #fff; }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn.danger:hover { background: var(--red); color: #fff; }
 .btn.success { border-color: var(--green); color: var(--green); }
 .btn.success:hover { background: var(--green); color: #000; }
-.btn.muted   { border-color: var(--muted); color: var(--muted); }
-.btn.muted:hover   { background: var(--muted); color: #000; }
+.btn.muted { border-color: var(--muted); color: var(--muted); }
+.btn.muted:hover { background: var(--muted); color: #000; }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
-/* ── LAYOUT ── */
 main { max-width: 980px; margin: 0 auto; padding: 2rem 1rem 5rem; display: grid; gap: 2rem; }
 
 .section-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; }
-.section-card h2 { font-family: ‘Bebas Neue’, cursive; font-size: 1.7rem; color: var(--amber); letter-spacing: 0.08em; margin-bottom: 1.1rem; }
+.section-card h2 { font-family: 'Bebas Neue', cursive; font-size: 1.7rem; color: var(--amber); letter-spacing: 0.08em; margin-bottom: 1.1rem; }
 
-/* ── SETUP ── */
 .setup-controls {
 display: flex; gap: 1.5rem; align-items: flex-end;
 flex-wrap: wrap; margin-bottom: 1.3rem;
@@ -92,10 +86,10 @@ padding-bottom: 1.3rem; border-bottom: 1px solid var(--border);
 .stepper button {
 background: transparent; border: none; color: var(--amber);
 font-size: 1.1rem; width: 36px; height: 36px;
-cursor: pointer; transition: background 0.15s; font-family: ‘DM Mono’, monospace;
+cursor: pointer; transition: background 0.15s; font-family: 'DM Mono', monospace;
 }
 .stepper button:hover { background: var(--amber-glow); }
-.stepper span { min-width: 44px; text-align: center; font-family: ‘Bebas Neue’, cursive; font-size: 1.4rem; color: var(--text); }
+.stepper span { min-width: 44px; text-align: center; font-family: 'Bebas Neue', cursive; font-size: 1.4rem; color: var(--text); }
 
 .team-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 0.65rem; margin-bottom: 1.2rem; }
 
@@ -108,13 +102,12 @@ border-radius: 3px; padding: 0.5rem 0.75rem; transition: border-color 0.2s;
 .team-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .team-input-wrap input {
 background: transparent; border: none; outline: none;
-color: var(--text); font-family: ‘DM Mono’, monospace; font-size: 0.82rem; width: 100%;
+color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.82rem; width: 100%;
 }
 .team-input-wrap input::placeholder { color: var(--muted); }
 
 .flex-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 
-/* ── STANDINGS ── */
 #standings-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 #standings-table th {
 text-align: left; color: var(--muted); font-weight: 500;
@@ -122,16 +115,15 @@ letter-spacing: 0.15em; text-transform: uppercase; font-size: 0.67rem;
 padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border);
 }
 #standings-table td { padding: 0.6rem 0.7rem; border-bottom: 1px solid #1c1c1c; }
-.rank-num { font-family:‘Bebas Neue’,cursive; font-size:1.1rem; color:var(--muted); text-align:center; }
-.rank-num.gold   { color:#ffd700; }
+.rank-num { font-family:'Bebas Neue',cursive; font-size:1.1rem; color:var(--muted); text-align:center; }
+.rank-num.gold { color:#ffd700; }
 .rank-num.silver { color:#c0c0c0; }
 .rank-num.bronze { color:#cd7f32; }
 .team-badge { display:inline-flex; align-items:center; gap:0.5rem; font-weight:500; }
-.badge-dot  { width:8px; height:8px; border-radius:50%; }
-.stat-cell      { text-align:center; }
+.badge-dot { width:8px; height:8px; border-radius:50%; }
+.stat-cell { text-align:center; }
 .stat-highlight { color:var(--amber); font-weight:500; }
 
-/* ── MATCH CARDS ── */
 #matches-grid { display: grid; gap: 0.9rem; }
 
 .match-card {
@@ -139,25 +131,22 @@ background: var(--bg); border: 1px solid var(--border);
 border-radius: 6px; overflow: hidden;
 transition: border-color 0.25s, box-shadow 0.25s;
 }
-.match-card.pending  { border-color: var(--border); }
-.match-card.running  { border-color: var(--amber); box-shadow: 0 0 20px rgba(245,166,35,0.1); }
-.match-card.done     { border-color: #1e3a1e; }
+.match-card.pending { border-color: var(--border); }
+.match-card.running { border-color: var(--amber); box-shadow: 0 0 20px rgba(245,166,35,0.1); }
+.match-card.done { border-color: #1e3a1e; }
 .match-card.overtime { border-color: var(--red); box-shadow: 0 0 20px rgba(255,77,77,0.15); }
 
-/* top strip = match timer area */
 .match-timer-strip {
 display: flex; align-items: center; justify-content: space-between;
 gap: 0.75rem; padding: 0.55rem 1rem;
 background: var(--card); border-bottom: 1px solid var(--border);
 flex-wrap: wrap;
 }
-
 .match-timer-strip.hidden { display: none; }
-
 .match-timer-left { display: flex; align-items: center; gap: 0.6rem; }
 
 .match-timer-display {
-font-family: ‘Bebas Neue’, cursive; font-size: 1.5rem;
+font-family: 'Bebas Neue', cursive; font-size: 1.5rem;
 letter-spacing: 0.08em; min-width: 5.5ch;
 color: var(--amber); transition: color 0.3s;
 }
@@ -168,10 +157,8 @@ color: var(--amber); transition: color 0.3s;
 
 .match-timer-bar-wrap { flex: 1; max-width: 180px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .match-timer-bar { height: 100%; width: 100%; border-radius: 2px; background: var(--amber); transition: width 1s linear, background 0.4s; }
-
 .match-timer-actions { display: flex; gap: 0.4rem; align-items: center; }
 
-/* duration inline editor */
 .match-duration-wrap {
 display: flex; align-items: center; gap: 0.4rem;
 font-size: 0.7rem; color: var(--muted);
@@ -183,15 +170,14 @@ border: 1px solid var(--border); border-radius: 2px; overflow: hidden;
 .match-duration-wrap .mini-stepper button {
 background: transparent; border: none; color: var(--amber);
 font-size: 0.9rem; width: 24px; height: 24px;
-cursor: pointer; font-family: ‘DM Mono’, monospace; line-height: 1;
+cursor: pointer; font-family: 'DM Mono', monospace; line-height: 1;
 }
 .match-duration-wrap .mini-stepper button:hover { background: var(--amber-glow); }
 .match-duration-wrap .mini-stepper span {
-font-family: ‘Bebas Neue’, cursive; font-size: 1rem;
+font-family: 'Bebas Neue', cursive; font-size: 1rem;
 min-width: 2.4ch; text-align: center; color: var(--text);
 }
 
-/* match body: teams + cups */
 .match-body {
 display: grid; grid-template-columns: 1fr auto 1fr;
 align-items: center; gap: 0.8rem; padding: 0.85rem 1rem;
@@ -212,18 +198,17 @@ display: flex; align-items: center; justify-content: center;
 transition: all 0.15s; font-size: 0.8rem; line-height: 1;
 }
 .cup:hover { border-color: var(--amber); }
-.cup.hit::after { content: ‘🍺’; }
+.cup.hit::after { content: '🍺'; }
 
 .cup-viz { display: flex; gap: 3px; margin-top: 0.15rem; }
 .cup-viz-item { width: 13px; height: 13px; border-radius: 2px; background: var(--border); }
 .cup-viz-item.scored { background: var(--amber); }
 
-.match-vs { font-family: ‘Bebas Neue’, cursive; font-size: 1.4rem; color: var(--muted); letter-spacing: 0.1em; text-align: center; }
+.match-vs { font-family: 'Bebas Neue', cursive; font-size: 1.4rem; color: var(--muted); letter-spacing: 0.1em; text-align: center; }
 .match-round-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; text-align: center; margin-bottom: 0.15rem; }
-.done-label   { font-size: 0.62rem; color: var(--green); letter-spacing: 0.2em; }
+.done-label { font-size: 0.62rem; color: var(--green); letter-spacing: 0.2em; }
 .winner-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--green); }
 
-/* start match button inside pending card */
 .match-start-row {
 display: flex; align-items: center; justify-content: center;
 padding: 0.6rem 1rem; gap: 0.75rem;
@@ -232,19 +217,17 @@ flex-wrap: wrap;
 }
 .match-start-row.hidden { display: none; }
 
-/* ── PODIUM ── */
 #final-section { display: none; }
 #final-section.visible { display: block; }
 
 .podium { display: flex; justify-content: center; align-items: flex-end; gap: 1rem; margin-top: 1.5rem; }
 .podium-place { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-.podium-name { font-family: ‘Bebas Neue’, cursive; font-size: 1.1rem; letter-spacing: 0.08em; text-align: center; }
-.podium-block { width: 110px; border-radius: 3px 3px 0 0; display: flex; align-items: center; justify-content: center; font-family: ‘Bebas Neue’, cursive; font-size: 1.8rem; }
+.podium-name { font-family: 'Bebas Neue', cursive; font-size: 1.1rem; letter-spacing: 0.08em; text-align: center; }
+.podium-block { width: 110px; border-radius: 3px 3px 0 0; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', cursive; font-size: 1.8rem; }
 .podium-block.p1 { height:90px; background:linear-gradient(135deg,#b8860b,#ffd700); color:#000; }
-.podium-block.p2 { height:65px; background:linear-gradient(135deg,#777,#c0c0c0);   color:#000; }
+.podium-block.p2 { height:65px; background:linear-gradient(135deg,#777,#c0c0c0); color:#000; }
 .podium-block.p3 { height:45px; background:linear-gradient(135deg,#7b4f2b,#cd7f32);color:#000; }
 
-/* ── MODAL ── */
 #modal-overlay {
 position: fixed; inset: 0; background: rgba(0,0,0,0.8);
 display: flex; align-items: center; justify-content: center;
@@ -257,15 +240,14 @@ border-radius: 6px; padding: 2rem 2.5rem; max-width: 360px; width: 90%;
 text-align: center; transform: scale(0.92); transition: transform 0.2s;
 }
 #modal-overlay.visible #modal-box { transform: scale(1); }
-#modal-box h3 { font-family: ‘Bebas Neue’, cursive; font-size: 1.9rem; color: var(--red); letter-spacing: 0.08em; margin-bottom: 0.5rem; }
-#modal-box p  { font-size: 0.8rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.5rem; }
+#modal-box h3 { font-family: 'Bebas Neue', cursive; font-size: 1.9rem; color: var(--red); letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+#modal-box p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.5rem; }
 #modal-box .flex-row { justify-content: center; }
 
-/* ── FAB ── */
 #fab-reset {
 position: fixed; bottom: 1.5rem; right: 1.5rem;
 background: var(--card); border: 1px solid var(--border);
-color: var(--muted); font-family: ‘DM Mono’, monospace;
+color: var(--muted); font-family: 'DM Mono', monospace;
 font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
 padding: 0.55rem 1.1rem; border-radius: 999px;
 cursor: pointer; z-index: 100; transition: all 0.2s; display: none;
@@ -273,7 +255,6 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 }
 #fab-reset:hover { border-color: var(--red); color: var(--red); }
 
-/* ── CONFETTI ── */
 .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 500; overflow: hidden; }
 .confetti-piece { position: absolute; border-radius: 2px; animation: fall linear forwards; }
 @keyframes fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
@@ -281,608 +262,564 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 .animate-in { animation: slideIn 0.35s ease forwards; }
 </style>
-
 </head>
 <body>
 
 <header>
-  <h1>🍺 BEER PONG</h1>
-  <p id="header-sub">Konfigurera din turnering nedan</p>
+ <h1>🍺 BEER PONG</h1>
+ <p id="header-sub">Konfigurera din turnering nedan</p>
 </header>
 
-<!-- slim sticky top bar: just overall match progress -->
-
 <div id="top-bar">
-  <span class="progress-label" id="progress-label">Redo att köra</span>
-  <div class="top-progress-wrap"><div id="top-progress"></div></div>
-  <button class="btn muted sm" id="fab-inline-reset" onclick="confirmReset()" style="display:none">↺ Återställ</button>
+ <span class="progress-label" id="progress-label">Redo att köra</span>
+ <div class="top-progress-wrap"><div id="top-progress"></div></div>
+ <button class="btn muted sm" id="fab-inline-reset" onclick="confirmReset()" style="display:none">↺ Återställ</button>
 </div>
 
 <main>
 
-  <!-- SETUP -->
+ <div class="section-card animate-in" id="setup-section">
+ <h2>⚙️ Turneringsinställningar</h2>
+ <div class="setup-controls">
+ <div class="control-group">
+ <label>Antal lag</label>
+ <div class="stepper">
+ <button onclick="changeTeams(-1)">−</button>
+ <span id="team-count-display">5</span>
+ <button onclick="changeTeams(1)">+</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <label>Muggar att vinna</label>
+ <div class="stepper">
+ <button onclick="changeCups(-1)">−</button>
+ <span id="cups-display">3</span>
+ <button onclick="changeCups(1)">+</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <label>Tid per match (min)</label>
+ <div class="stepper">
+ <button onclick="changeTime(-1)">−</button>
+ <span id="time-display">10</span>
+ <button onclick="changeTime(1)">+</button>
+ </div>
+ </div>
+ </div>
+ <div class="team-inputs" id="team-inputs"></div>
+ <div class="flex-row">
+ <button class="btn success" onclick="startTournament()">STARTA TURNERING</button>
+ <span style="font-size:0.72rem;color:var(--muted)" id="match-count-label">10 matcher · round-robin</span>
+ </div>
+ </div>
 
-  <div class="section-card animate-in" id="setup-section">
-    <h2>⚙️ Turneringsinställningar</h2>
-    <div class="setup-controls">
-      <div class="control-group">
-        <label>Antal lag</label>
-        <div class="stepper">
-          <button onclick="changeTeams(-1)">−</button>
-          <span id="team-count-display">5</span>
-          <button onclick="changeTeams(1)">+</button>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Muggar att vinna</label>
-        <div class="stepper">
-          <button onclick="changeCups(-1)">−</button>
-          <span id="cups-display">3</span>
-          <button onclick="changeCups(1)">+</button>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Tid per match (min)</label>
-        <div class="stepper">
-          <button onclick="changeTime(-1)">−</button>
-          <span id="time-display">10</span>
-          <button onclick="changeTime(1)">+</button>
-        </div>
-      </div>
-    </div>
-    <div class="team-inputs" id="team-inputs"></div>
-    <div class="flex-row">
-      <button class="btn success" onclick="startTournament()">STARTA TURNERING</button>
-      <span style="font-size:0.72rem;color:var(--muted)" id="match-count-label">10 matcher · round-robin</span>
-    </div>
-  </div>
+ <div class="section-card animate-in" id="standings-section" style="display:none">
+ <h2>🏆 Tabell</h2>
+ <table id="standings-table">
+ <thead>
+ <tr>
+ <th style="width:36px">#</th>
+ <th>Lag</th>
+ <th class="stat-cell">M</th>
+ <th class="stat-cell">V</th>
+ <th class="stat-cell">Muggar</th>
+ <th class="stat-cell">Poäng</th>
+ </tr>
+ </thead>
+ <tbody id="standings-body"></tbody>
+ </table>
+ </div>
 
-  <!-- STANDINGS -->
+ <div class="section-card animate-in" id="matches-section" style="display:none">
+ <h2>🎯 Matcher</h2>
+ <div id="matches-grid"></div>
+ </div>
 
-  <div class="section-card animate-in" id="standings-section" style="display:none">
-    <h2>🏆 Tabell</h2>
-    <table id="standings-table">
-      <thead>
-        <tr>
-          <th style="width:36px">#</th>
-          <th>Lag</th>
-          <th class="stat-cell">M</th>
-          <th class="stat-cell">V</th>
-          <th class="stat-cell">Muggar</th>
-          <th class="stat-cell">Poäng</th>
-        </tr>
-      </thead>
-      <tbody id="standings-body"></tbody>
-    </table>
-  </div>
-
-  <!-- MATCHES -->
-
-  <div class="section-card animate-in" id="matches-section" style="display:none">
-    <h2>🎯 Matcher</h2>
-    <div id="matches-grid"></div>
-  </div>
-
-  <!-- FINAL -->
-
-  <div class="section-card animate-in" id="final-section">
-    <h2>🥇 Slutresultat</h2>
-    <div class="podium" id="podium"></div>
-    <div style="text-align:center;margin-top:2rem">
-      <button class="btn" onclick="confirmReset()">↺ NY TURNERING</button>
-    </div>
-  </div>
+ <div class="section-card animate-in" id="final-section">
+ <h2>🥇 Slutresultat</h2>
+ <div class="podium" id="podium"></div>
+ <div style="text-align:center;margin-top:2rem">
+ <button class="btn" onclick="confirmReset()">↺ NY TURNERING</button>
+ </div>
+ </div>
 
 </main>
 
 <button id="fab-reset" onclick="confirmReset()">↺ Återställ turnering</button>
 
 <div id="modal-overlay">
-  <div id="modal-box">
-    <h3>⚠️ Återställ?</h3>
-    <p>All poäng och alla matchresultat raderas permanent.<br>Är du helt säker?</p>
-    <div class="flex-row">
-      <button class="btn danger" onclick="doReset()">JA, ÅTERSTÄLL</button>
-      <button class="btn muted"  onclick="closeModal()">AVBRYT</button>
-    </div>
-  </div>
+ <div id="modal-box">
+ <h3>⚠️ Återställ?</h3>
+ <p>All poäng och alla matchresultat raderas permanent.<br>Är du helt säker?</p>
+ <div class="flex-row">
+ <button class="btn danger" onclick="doReset()">JA, ÅTERSTÄLL</button>
+ <button class="btn muted" onclick="closeModal()">AVBRYT</button>
+ </div>
+ </div>
 </div>
 
 <div class="confetti-wrap" id="confetti-wrap"></div>
 
 <script>
 const TEAM_COLORS = [
-  '#f5a623','#39d353','#4dabf7','#f783ac',
-  '#b197fc','#63e6be','#ffa94d','#a9e34b',
-  '#74c0fc','#da77f2','#ff8787','#66d9e8'
+ '#f5a623','#39d353','#4dabf7','#f783ac',
+ '#b197fc','#63e6be','#ffa94d','#a9e34b',
+ '#74c0fc','#da77f2','#ff8787','#66d9e8'
 ];
 
-// ── CONFIG STATE ─────────────────────────────────────────────────────────────
-let numTeams        = 5;
-let cupsToWin       = 3;
-let defaultMinutes  = 10;   // default per-match duration
+let numTeams = 5;
+let cupsToWin = 3;
+let defaultMinutes = 10;
 
-// ── TOURNAMENT STATE ─────────────────────────────────────────────────────────
-let teams   = [];
-let matches = [];   // each match has its own timer state
-let stats   = {};
+let teams = [];
+let matches = [];
+let stats = {};
 let tournamentStarted = false;
 
-// Only one match timer runs at a time
 let activeTimerMatchId = null;
 let timerInterval = null;
 
-// ── SETUP CONTROLS ───────────────────────────────────────────────────────────
 function changeTeams(d) {
-  numTeams = Math.max(2, Math.min(12, numTeams + d));
-  document.getElementById('team-count-display').textContent = numTeams;
-  updateMatchCount();
-  initTeamInputs();
+ numTeams = Math.max(2, Math.min(12, numTeams + d));
+ document.getElementById('team-count-display').textContent = numTeams;
+ updateMatchCount();
+ initTeamInputs();
 }
 
 function changeCups(d) {
-  cupsToWin = Math.max(1, Math.min(10, cupsToWin + d));
-  document.getElementById('cups-display').textContent = cupsToWin;
+ cupsToWin = Math.max(1, Math.min(10, cupsToWin + d));
+ document.getElementById('cups-display').textContent = cupsToWin;
 }
 
 function changeTime(d) {
-  defaultMinutes = Math.max(1, Math.min(60, defaultMinutes + d));
-  document.getElementById('time-display').textContent = defaultMinutes;
+ defaultMinutes = Math.max(1, Math.min(60, defaultMinutes + d));
+ document.getElementById('time-display').textContent = defaultMinutes;
 }
 
 function updateMatchCount() {
-  const c = (numTeams * (numTeams - 1)) / 2;
-  document.getElementById('match-count-label').textContent = `${c} matcher · round-robin`;
+ const c = (numTeams * (numTeams - 1)) / 2;
+ document.getElementById('match-count-label').textContent = `${c} matcher · round-robin`;
 }
 
 function initTeamInputs() {
-  const container = document.getElementById('team-inputs');
-  const existing  = Array.from(container.querySelectorAll('input')).map(i => i.value);
-  container.innerHTML = '';
-  for (let i = 0; i < numTeams; i++) {
-    const wrap = document.createElement('div');
-    wrap.className = 'team-input-wrap';
-    const dot = document.createElement('div');
-    dot.className = 'team-dot';
-    dot.style.background = TEAM_COLORS[i % TEAM_COLORS.length];
-    const inp = document.createElement('input');
-    inp.type = 'text'; inp.placeholder = `Lag ${i+1}`;
-    inp.id = `team-inp-${i}`; inp.maxLength = 18;
-    if (existing[i]) inp.value = existing[i];
-    wrap.appendChild(dot); wrap.appendChild(inp);
-    container.appendChild(wrap);
-  }
+ const container = document.getElementById('team-inputs');
+ const existing = Array.from(container.querySelectorAll('input')).map(i => i.value);
+ container.innerHTML = '';
+ for (let i = 0; i < numTeams; i++) {
+ const wrap = document.createElement('div');
+ wrap.className = 'team-input-wrap';
+ const dot = document.createElement('div');
+ dot.className = 'team-dot';
+ dot.style.background = TEAM_COLORS[i % TEAM_COLORS.length];
+ const inp = document.createElement('input');
+ inp.type = 'text'; inp.placeholder = `Lag ${i+1}`;
+ inp.id = `team-inp-${i}`; inp.maxLength = 18;
+ if (existing[i]) inp.value = existing[i];
+ wrap.appendChild(dot); wrap.appendChild(inp);
+ container.appendChild(wrap);
+ }
 }
 
 function getTeamNames() {
-  return Array.from({length: numTeams}, (_, i) => {
-    const v = document.getElementById(`team-inp-${i}`).value.trim();
-    return v || `Lag ${i+1}`;
-  });
+ return Array.from({length: numTeams}, (_, i) => {
+ const v = document.getElementById(`team-inp-${i}`).value.trim();
+ return v || `Lag ${i+1}`;
+ });
 }
 
-// ── START TOURNAMENT ─────────────────────────────────────────────────────────
 function startTournament() {
-  teams = getTeamNames(); stats = {}; matches = [];
+ teams = getTeamNames(); stats = {}; matches = [];
 
-  teams.forEach((t, i) => {
-    stats[t] = { wins:0, losses:0, played:0, cupsFor:0, points:0, color: TEAM_COLORS[i % TEAM_COLORS.length] };
-  });
+ teams.forEach((t, i) => {
+ stats[t] = { wins:0, losses:0, played:0, cupsFor:0, points:0, color: TEAM_COLORS[i % TEAM_COLORS.length] };
+ });
 
-  let id = 0;
-  for (let i = 0; i < teams.length; i++)
-    for (let j = i+1; j < teams.length; j++)
-      matches.push({
-        id: id++,
-        a: teams[i], b: teams[j],
-        cupsA: 0, cupsB: 0,
-        done: false, winner: null,
-        // per-match timer
-        durationMinutes: defaultMinutes,
-        secondsLeft: defaultMinutes * 60,
-        timerRunning: false,
-        timerStarted: false,
-        overtime: false,
-        overtimeSeconds: 0,
-      });
+ let id = 0;
+ for (let i = 0; i < teams.length; i++)
+ for (let j = i+1; j < teams.length; j++)
+ matches.push({
+ id: id++,
+ a: teams[i], b: teams[j],
+ cupsA: 0, cupsB: 0,
+ done: false, winner: null,
+ durationMinutes: defaultMinutes,
+ secondsLeft: defaultMinutes * 60,
+ timerRunning: false,
+ timerStarted: false,
+ overtime: false,
+ overtimeSeconds: 0,
+ });
 
-  document.getElementById('setup-section').style.display     = 'none';
-  document.getElementById('standings-section').style.display = 'block';
-  document.getElementById('matches-section').style.display   = 'block';
-  document.getElementById('final-section').classList.remove('visible');
-  document.getElementById('fab-reset').style.display         = 'block';
-  document.getElementById('fab-inline-reset').style.display  = 'inline-block';
-  document.getElementById('header-sub').textContent          =
-    `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ document.getElementById('setup-section').style.display = 'none';
+ document.getElementById('standings-section').style.display = 'block';
+ document.getElementById('matches-section').style.display = 'block';
+ document.getElementById('final-section').classList.remove('visible');
+ document.getElementById('fab-reset').style.display = 'block';
+ document.getElementById('fab-inline-reset').style.display = 'inline-block';
+ document.getElementById('header-sub').textContent =
+ `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
 
-  tournamentStarted = true;
-  renderMatches();
-  renderStandings();
-  updateTopProgress();
+ tournamentStarted = true;
+ renderMatches();
+ renderStandings();
+ updateTopProgress();
 }
 
-// ── TOP BAR PROGRESS ─────────────────────────────────────────────────────────
 function updateTopProgress() {
-  const done  = matches.filter(m => m.done).length;
-  const total = matches.length;
-  const pct   = total ? (done / total) * 100 : 0;
-  document.getElementById('top-progress').style.width = pct + '%';
-  document.getElementById('progress-label').textContent =
-    `${done} / ${total} matcher klara`;
+ const done = matches.filter(m => m.done).length;
+ const total = matches.length;
+ const pct = total ? (done / total) * 100 : 0;
+ document.getElementById('top-progress').style.width = pct + '%';
+ document.getElementById('progress-label').textContent =
+ `${done} / ${total} matcher klara`;
 }
 
-// ── PER-MATCH TIMER ──────────────────────────────────────────────────────────
 function startMatchTimer(matchId) {
-  // Pause any currently running timer
-  if (activeTimerMatchId !== null && activeTimerMatchId !== matchId) {
-    pauseMatchTimer(activeTimerMatchId);
-  }
-
-  const m = matches[matchId];
-  if (m.done) return;
-
-  m.timerRunning = true;
-  m.timerStarted = true;
-  activeTimerMatchId = matchId;
-
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => tickMatchTimer(matchId), 1000);
-  renderMatchCard(matchId);
+ if (activeTimerMatchId !== null && activeTimerMatchId !== matchId) {
+ pauseMatchTimer(activeTimerMatchId);
+ }
+ const m = matches[matchId];
+ if (m.done) return;
+ m.timerRunning = true;
+ m.timerStarted = true;
+ activeTimerMatchId = matchId;
+ clearInterval(timerInterval);
+ timerInterval = setInterval(() => tickMatchTimer(matchId), 1000);
+ renderMatchCard(matchId);
 }
 
 function pauseMatchTimer(matchId) {
-  const m = matches[matchId];
-  if (!m) return;
-  m.timerRunning = false;
-  if (activeTimerMatchId === matchId) {
-    clearInterval(timerInterval);
-    activeTimerMatchId = null;
-  }
-  renderMatchCard(matchId);
+ const m = matches[matchId];
+ if (!m) return;
+ m.timerRunning = false;
+ if (activeTimerMatchId === matchId) {
+ clearInterval(timerInterval);
+ activeTimerMatchId = null;
+ }
+ renderMatchCard(matchId);
 }
 
 function toggleMatchTimer(matchId) {
-  const m = matches[matchId];
-  if (m.timerRunning) pauseMatchTimer(matchId);
-  else startMatchTimer(matchId);
+ const m = matches[matchId];
+ if (m.timerRunning) pauseMatchTimer(matchId);
+ else startMatchTimer(matchId);
 }
 
 function resetMatchTimer(matchId) {
-  const m = matches[matchId];
-  pauseMatchTimer(matchId);
-  m.secondsLeft    = m.durationMinutes * 60;
-  m.timerStarted   = false;
-  m.overtime       = false;
-  m.overtimeSeconds = 0;
-  renderMatchCard(matchId);
+ const m = matches[matchId];
+ pauseMatchTimer(matchId);
+ m.secondsLeft = m.durationMinutes * 60;
+ m.timerStarted = false;
+ m.overtime = false;
+ m.overtimeSeconds = 0;
+ renderMatchCard(matchId);
 }
 
 function changeMatchDuration(matchId, delta) {
-  const m = matches[matchId];
-  if (m.timerStarted) return; // can only edit before start
-  m.durationMinutes = Math.max(1, Math.min(60, m.durationMinutes + delta));
-  m.secondsLeft = m.durationMinutes * 60;
-  renderMatchCard(matchId);
+ const m = matches[matchId];
+ if (m.timerStarted) return;
+ m.durationMinutes = Math.max(1, Math.min(60, m.durationMinutes + delta));
+ m.secondsLeft = m.durationMinutes * 60;
+ renderMatchCard(matchId);
 }
 
 function tickMatchTimer(matchId) {
-  const m = matches[matchId];
-  if (!m || m.done) { clearInterval(timerInterval); return; }
-
-  if (m.secondsLeft > 0) {
-    m.secondsLeft--;
-  } else {
-    // Switch to overtime count-up
-    m.overtime = true;
-    m.overtimeSeconds++;
-  }
-  renderMatchTimerStrip(matchId);
+ const m = matches[matchId];
+ if (!m || m.done) { clearInterval(timerInterval); return; }
+ if (m.secondsLeft > 0) {
+ m.secondsLeft--;
+ } else {
+ m.overtime = true;
+ m.overtimeSeconds++;
+ }
+ renderMatchTimerStrip(matchId);
 }
 
-// ── RENDER ───────────────────────────────────────────────────────────────────
-function renderMatches() {
-  const grid = document.getElementById('matches-grid');
-  grid.innerHTML = '';
-  matches.forEach(m => {
-    const wrapper = document.createElement('div');
-    wrapper.id = `match-wrapper-${m.id}`;
-    grid.appendChild(wrapper);
-    renderMatchCard(m.id);
-  });
-}
-
-function renderMatchCard(matchId) {
-  const m = matches[matchId];
-  const aColor = stats[m.a].color;
-  const bColor = stats[m.b].color;
-
-  const vizCups = count =>
-    Array.from({length: cupsToWin}, (_, c) =>
-      `<div class="cup-viz-item${c < count ? ' scored' : ''}"></div>`).join('');
-
-  const statusClass = m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'running' : 'pending';
-
-  // Timer strip html
-  const timerStripHtml = m.done ? '' : `
-    <div class="match-timer-strip" id="strip-${m.id}">
-      <div class="match-timer-left">
-        <div class="match-timer-display ${timerDisplayClass(m)}" id="tdisp-${m.id}">${timerDisplayText(m)}</div>
-        <div class="match-timer-bar-wrap">
-          <div class="match-timer-bar" id="tbar-${m.id}" style="width:${timerBarPct(m)}%;background:${timerBarColor(m)}"></div>
-        </div>
-      </div>
-      <div class="match-timer-actions">
-        ${!m.timerStarted ? `
-          <div class="match-duration-wrap">
-            <div class="mini-stepper">
-              <button onclick="changeMatchDuration(${m.id},-1)">−</button>
-              <span id="mdur-${m.id}">${m.durationMinutes}</span>
-              <button onclick="changeMatchDuration(${m.id},1)">+</button>
-            </div>
-            <span>min</span>
-          </div>
-        ` : ''}
-        ${m.timerStarted && !m.done ? `
-          <button class="btn sm ${m.timerRunning ? 'muted' : ''}" onclick="toggleMatchTimer(${m.id})">
-            ${m.timerRunning ? '⏸ PAUSA' : '▶ FORTSÄTT'}
-          </button>
-          <button class="btn sm muted" onclick="resetMatchTimer(${m.id})" title="Återställ timer">↺</button>
-        ` : ''}
-      </div>
-    </div>`;
-
-  // Start row
-  const startRowHtml = (!m.done && !m.timerStarted) ? `
-    <div class="match-start-row" id="startrow-${m.id}">
-      <button class="btn success" onclick="startMatchTimer(${m.id})">▶ STARTA MATCH ${m.id+1}</button>
-    </div>` : '';
-
-  // Cup row builder
-  const cups = (side, current, color) => {
-    let html = '<div class="cup-selector">';
-    for (let i = 1; i <= cupsToWin; i++) {
-      const hit = i <= current;
-      html += `<button class="cup${hit?' hit':''}"
-        onclick="setCups(${m.id},'${side}',${i})"
-        ${m.done ? 'disabled' : ''}
-        style="${hit?`background:${color};border-color:${color}`:''}"></button>`;
-    }
-    return html + '</div>';
-  };
-
-  const html = `
-    <div class="match-card ${statusClass}" id="match-${m.id}">
-      ${timerStripHtml}
-      <div class="match-body">
-        <div class="match-team">
-          <div class="match-team-name">
-            <div class="badge-dot" style="background:${aColor}"></div>
-            <span>${m.a}</span>
-          </div>
-          ${m.done ? `<div class="cup-viz">${vizCups(m.cupsA)}</div>` : cups('a', m.cupsA, aColor)}
-          ${m.done && m.winner===m.a ? '<span class="winner-label">✓ VANN</span>' : ''}
-        </div>
-        <div style="text-align:center">
-          <div class="match-round-label">Match ${m.id+1}</div>
-          <div class="match-vs">${m.done ? `<span class="done-label">KLART</span>` : 'VS'}</div>
-          ${m.done ? `<div style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--amber)">${m.cupsA}--${m.cupsB}</div>` : ''}
-        </div>
-        <div class="match-team right">
-          <div class="match-team-name">
-            <div class="badge-dot" style="background:${bColor}"></div>
-            <span>${m.b}</span>
-          </div>
-          ${m.done ? `<div class="cup-viz">${vizCups(m.cupsB)}</div>` : cups('b', m.cupsB, bColor)}
-          ${m.done && m.winner===m.b ? '<span class="winner-label">✓ VANN</span>' : ''}
-        </div>
-      </div>
-      ${startRowHtml}
-    </div>`;
-
-  document.getElementById(`match-wrapper-${m.id}`).innerHTML = html;
-}
-
-// Lightweight re-render of just the timer strip numbers (avoids full re-render during tick)
-function renderMatchTimerStrip(matchId) {
-  const m = matches[matchId];
-
-  const disp = document.getElementById(`tdisp-${matchId}`);
-  const bar  = document.getElementById(`tbar-${matchId}`);
-  if (!disp) return;
-
-  disp.textContent = timerDisplayText(m);
-  disp.className   = `match-timer-display ${timerDisplayClass(m)}`;
-  if (bar) {
-    bar.style.width      = timerBarPct(m) + '%';
-    bar.style.background = timerBarColor(m);
-  }
-
-  // Update card border class
-  const card = document.getElementById(`match-${matchId}`);
-  if (card) {
-    card.className = `match-card ${m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : 'pending'}`;
-  }
-}
-
-// ── TIMER HELPERS ─────────────────────────────────────────────────────────────
 function timerDisplayText(m) {
-  if (m.overtime) {
-    const s = m.overtimeSeconds;
-    return `+${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  }
-  const s = m.secondsLeft;
-  const min = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+ if (m.overtime) {
+ const s = m.overtimeSeconds;
+ return `+${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+ }
+ const s = m.secondsLeft;
+ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 }
 
 function timerDisplayClass(m) {
-  if (m.overtime) return 'overtime-label';
-  if (m.secondsLeft <= 30 && m.timerStarted) return 'warning';
-  return '';
+ if (m.overtime) return 'overtime-label';
+ if (m.secondsLeft <= 30 && m.timerStarted) return 'warning';
+ return '';
 }
 
 function timerBarPct(m) {
-  if (m.overtime) return 100;
-  const total = m.durationMinutes * 60;
-  return total > 0 ? (m.secondsLeft / total) * 100 : 100;
+ if (m.overtime) return 100;
+ const total = m.durationMinutes * 60;
+ return total > 0 ? (m.secondsLeft / total) * 100 : 100;
 }
 
 function timerBarColor(m) {
-  if (m.overtime) return 'var(--red)';
-  const pct = timerBarPct(m);
-  if (pct <= 20) return 'var(--red)';
-  if (pct <= 40) return '#f0c040';
-  return 'var(--amber)';
+ if (m.overtime) return 'var(--red)';
+ const pct = timerBarPct(m);
+ if (pct <= 20) return 'var(--red)';
+ if (pct <= 40) return '#f0c040';
+ return 'var(--amber)';
 }
 
-// ── CUPS / RESULTS ────────────────────────────────────────────────────────────
-function setCups(matchId, side, cups) {
-  const m = matches[matchId];
-  if (m.done) return;
-  if (side === 'a') m.cupsA = m.cupsA === cups ? cups - 1 : cups;
-  else              m.cupsB = m.cupsB === cups ? cups - 1 : cups;
+function renderMatches() {
+ const grid = document.getElementById('matches-grid');
+ grid.innerHTML = '';
+ matches.forEach(m => {
+ const wrapper = document.createElement('div');
+ wrapper.id = `match-wrapper-${m.id}`;
+ grid.appendChild(wrapper);
+ renderMatchCard(m.id);
+ });
+}
 
-  if (m.cupsA >= cupsToWin || m.cupsB >= cupsToWin) {
-    if (m.cupsA >= cupsToWin) { m.cupsA = cupsToWin; m.winner = m.a; }
-    else                       { m.cupsB = cupsToWin; m.winner = m.b; }
-    m.done = true;
-    // stop timer for this match
-    if (activeTimerMatchId === matchId) {
-      clearInterval(timerInterval);
-      activeTimerMatchId = null;
-    }
-    m.timerRunning = false;
-    applyStats(m);
-    renderStandings();
-    updateTopProgress();
-    checkFinished();
-  }
-  renderMatchCard(matchId);
+function renderMatchCard(matchId) {
+ const m = matches[matchId];
+ const aColor = stats[m.a].color;
+ const bColor = stats[m.b].color;
+
+ const vizCups = count =>
+ Array.from({length: cupsToWin}, (_, c) =>
+ `<div class="cup-viz-item${c < count ? ' scored' : ''}"></div>`).join('');
+
+ const statusClass = m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'running' : 'pending';
+
+ const timerStripHtml = m.done ? '' : `
+ <div class="match-timer-strip" id="strip-${m.id}">
+ <div class="match-timer-left">
+ <div class="match-timer-display ${timerDisplayClass(m)}" id="tdisp-${m.id}">${timerDisplayText(m)}</div>
+ <div class="match-timer-bar-wrap">
+ <div class="match-timer-bar" id="tbar-${m.id}" style="width:${timerBarPct(m)}%;background:${timerBarColor(m)}"></div>
+ </div>
+ </div>
+ <div class="match-timer-actions">
+ ${!m.timerStarted ? `
+ <div class="match-duration-wrap">
+ <div class="mini-stepper">
+ <button onclick="changeMatchDuration(${m.id},-1)">−</button>
+ <span id="mdur-${m.id}">${m.durationMinutes}</span>
+ <button onclick="changeMatchDuration(${m.id},1)">+</button>
+ </div>
+ <span>min</span>
+ </div>
+ ` : ''}
+ ${m.timerStarted && !m.done ? `
+ <button class="btn sm ${m.timerRunning ? 'muted' : ''}" onclick="toggleMatchTimer(${m.id})">
+ ${m.timerRunning ? '⏸ PAUSA' : '▶ FORTSÄTT'}
+ </button>
+ <button class="btn sm muted" onclick="resetMatchTimer(${m.id})" title="Återställ timer">↺</button>
+ ` : ''}
+ </div>
+ </div>`;
+
+ const startRowHtml = (!m.done && !m.timerStarted) ? `
+ <div class="match-start-row" id="startrow-${m.id}">
+ <button class="btn success" onclick="startMatchTimer(${m.id})">▶ STARTA MATCH ${m.id+1}</button>
+ </div>` : '';
+
+ const cups = (side, current, color) => {
+ let html = '<div class="cup-selector">';
+ for (let i = 1; i <= cupsToWin; i++) {
+ const hit = i <= current;
+ html += `<button class="cup${hit?' hit':''}"
+ onclick="setCups(${m.id},'${side}',${i})"
+ ${m.done ? 'disabled' : ''}
+ style="${hit?`background:${color};border-color:${color}`:''}"></button>`;
+ }
+ return html + '</div>';
+ };
+
+ const html = `
+ <div class="match-card ${statusClass}" id="match-${m.id}">
+ ${timerStripHtml}
+ <div class="match-body">
+ <div class="match-team">
+ <div class="match-team-name">
+ <div class="badge-dot" style="background:${aColor}"></div>
+ <span>${m.a}</span>
+ </div>
+ ${m.done ? `<div class="cup-viz">${vizCups(m.cupsA)}</div>` : cups('a', m.cupsA, aColor)}
+ ${m.done && m.winner===m.a ? '<span class="winner-label">✓ VANN</span>' : ''}
+ </div>
+ <div style="text-align:center">
+ <div class="match-round-label">Match ${m.id+1}</div>
+ <div class="match-vs">${m.done ? `<span class="done-label">KLART</span>` : 'VS'}</div>
+ ${m.done ? `<div style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--amber)">${m.cupsA}–${m.cupsB}</div>` : ''}
+ </div>
+ <div class="match-team right">
+ <div class="match-team-name">
+ <div class="badge-dot" style="background:${bColor}"></div>
+ <span>${m.b}</span>
+ </div>
+ ${m.done ? `<div class="cup-viz">${vizCups(m.cupsB)}</div>` : cups('b', m.cupsB, bColor)}
+ ${m.done && m.winner===m.b ? '<span class="winner-label">✓ VANN</span>' : ''}
+ </div>
+ </div>
+ ${startRowHtml}
+ </div>`;
+
+ document.getElementById(`match-wrapper-${m.id}`).innerHTML = html;
+}
+
+function renderMatchTimerStrip(matchId) {
+ const m = matches[matchId];
+ const disp = document.getElementById(`tdisp-${matchId}`);
+ const bar = document.getElementById(`tbar-${matchId}`);
+ if (!disp) return;
+ disp.textContent = timerDisplayText(m);
+ disp.className = `match-timer-display ${timerDisplayClass(m)}`;
+ if (bar) {
+ bar.style.width = timerBarPct(m) + '%';
+ bar.style.background = timerBarColor(m);
+ }
+ const card = document.getElementById(`match-${matchId}`);
+ if (card) {
+ card.className = `match-card ${m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : 'pending'}`;
+ }
+}
+
+function setCups(matchId, side, cups) {
+ const m = matches[matchId];
+ if (m.done) return;
+ if (side === 'a') m.cupsA = m.cupsA === cups ? cups - 1 : cups;
+ else m.cupsB = m.cupsB === cups ? cups - 1 : cups;
+
+ if (m.cupsA >= cupsToWin || m.cupsB >= cupsToWin) {
+ if (m.cupsA >= cupsToWin) { m.cupsA = cupsToWin; m.winner = m.a; }
+ else { m.cupsB = cupsToWin; m.winner = m.b; }
+ m.done = true;
+ if (activeTimerMatchId === matchId) {
+ clearInterval(timerInterval);
+ activeTimerMatchId = null;
+ }
+ m.timerRunning = false;
+ applyStats(m);
+ renderStandings();
+ updateTopProgress();
+ checkFinished();
+ }
+ renderMatchCard(matchId);
 }
 
 function applyStats(m) {
-  const sa = stats[m.a], sb = stats[m.b];
-  sa.played++; sb.played++;
-  sa.cupsFor += m.cupsA; sb.cupsFor += m.cupsB;
-  if (m.winner === m.a) { sa.wins++; sa.points += 3; sb.losses++; }
-  else                   { sb.wins++; sb.points += 3; sa.losses++; }
+ const sa = stats[m.a], sb = stats[m.b];
+ sa.played++; sb.played++;
+ sa.cupsFor += m.cupsA; sb.cupsFor += m.cupsB;
+ if (m.winner === m.a) { sa.wins++; sa.points += 3; sb.losses++; }
+ else { sb.wins++; sb.points += 3; sa.losses++; }
 }
 
-// ── STANDINGS ─────────────────────────────────────────────────────────────────
 function renderStandings() {
-  const sorted = [...teams].sort((a, b) => {
-    const sa = stats[a], sb = stats[b];
-    return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
-  });
+ const sorted = [...teams].sort((a, b) => {
+ const sa = stats[a], sb = stats[b];
+ return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
+ });
 
-  const body = document.getElementById('standings-body');
-  body.innerHTML = '';
-  const rankClass = ['gold','silver','bronze'];
+ const body = document.getElementById('standings-body');
+ body.innerHTML = '';
+ const rankClass = ['gold','silver','bronze'];
 
-  sorted.forEach((t, i) => {
-    const s = stats[t];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="rank-num ${rankClass[i]||''}">${i+1}</td>
-      <td><span class="team-badge"><span class="badge-dot" style="background:${s.color}"></span>${t}</span></td>
-      <td class="stat-cell">${s.played}</td>
-      <td class="stat-cell ${s.wins>0?'stat-highlight':''}">${s.wins}</td>
-      <td class="stat-cell">${s.cupsFor}</td>
-      <td class="stat-cell stat-highlight">${s.points}</td>`;
-    body.appendChild(tr);
-  });
+ sorted.forEach((t, i) => {
+ const s = stats[t];
+ const tr = document.createElement('tr');
+ tr.innerHTML = `
+ <td class="rank-num ${rankClass[i]||''}">${i+1}</td>
+ <td><span class="team-badge"><span class="badge-dot" style="background:${s.color}"></span>${t}</span></td>
+ <td class="stat-cell">${s.played}</td>
+ <td class="stat-cell ${s.wins>0?'stat-highlight':''}">${s.wins}</td>
+ <td class="stat-cell">${s.cupsFor}</td>
+ <td class="stat-cell stat-highlight">${s.points}</td>`;
+ body.appendChild(tr);
+ });
 }
 
-// ── FINAL ─────────────────────────────────────────────────────────────────────
 function checkFinished() {
-  if (matches.every(m => m.done)) setTimeout(showFinal, 600);
+ if (matches.every(m => m.done)) setTimeout(showFinal, 600);
 }
 
 function showFinal() {
-  const sorted = [...teams].sort((a, b) => {
-    const sa = stats[a], sb = stats[b];
-    return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
-  });
+ const sorted = [...teams].sort((a, b) => {
+ const sa = stats[a], sb = stats[b];
+ return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
+ });
 
-  const fin = document.getElementById('final-section');
-  fin.classList.add('visible');
+ const fin = document.getElementById('final-section');
+ fin.classList.add('visible');
 
-  const podium  = document.getElementById('podium');
-  const order   = [sorted[1], sorted[0], sorted[2]];
-  const classes = ['p2','p1','p3'];
-  const labels  = ['🥈','🥇','🥉'];
-  const heights = ['65px','90px','45px'];
+ const podium = document.getElementById('podium');
+ const order = [sorted[1], sorted[0], sorted[2]];
+ const classes = ['p2','p1','p3'];
+ const labels = ['🥈','🥇','🥉'];
+ const heights = ['65px','90px','45px'];
 
-  podium.innerHTML = '';
-  order.forEach((t, i) => {
-    if (!t) return;
-    const div = document.createElement('div');
-    div.className = 'podium-place';
-    div.innerHTML = `
-      <div class="podium-name" style="color:${stats[t].color}">${t}</div>
-      <div class="podium-block ${classes[i]}" style="height:${heights[i]}">${labels[i]}</div>`;
-    podium.appendChild(div);
-  });
+ podium.innerHTML = '';
+ order.forEach((t, i) => {
+ if (!t) return;
+ const div = document.createElement('div');
+ div.className = 'podium-place';
+ div.innerHTML = `
+ <div class="podium-name" style="color:${stats[t].color}">${t}</div>
+ <div class="podium-block ${classes[i]}" style="height:${heights[i]}">${labels[i]}</div>`;
+ podium.appendChild(div);
+ });
 
-  fin.scrollIntoView({ behavior:'smooth' });
-  spawnConfetti();
+ fin.scrollIntoView({ behavior:'smooth' });
+ spawnConfetti();
 }
 
-// ── CONFETTI ──────────────────────────────────────────────────────────────────
 function spawnConfetti() {
-  const wrap = document.getElementById('confetti-wrap');
-  const colors = ['#f5a623','#39d353','#4dabf7','#f783ac','#b197fc','#fff'];
-  for (let i = 0; i < 90; i++) {
-    const p = document.createElement('div');
-    p.className = 'confetti-piece';
-    p.style.cssText = `
-      left:${Math.random()*100}vw;top:-20px;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      animation-duration:${2+Math.random()*3}s;
-      animation-delay:${Math.random()*2}s;
-      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;`;
-    wrap.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
-  }
+ const wrap = document.getElementById('confetti-wrap');
+ const colors = ['#f5a623','#39d353','#4dabf7','#f783ac','#b197fc','#fff'];
+ for (let i = 0; i < 90; i++) {
+ const p = document.createElement('div');
+ p.className = 'confetti-piece';
+ p.style.cssText = `
+ left:${Math.random()*100}vw;top:-20px;
+ background:${colors[Math.floor(Math.random()*colors.length)]};
+ animation-duration:${2+Math.random()*3}s;
+ animation-delay:${Math.random()*2}s;
+ width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;`;
+ wrap.appendChild(p);
+ p.addEventListener('animationend', () => p.remove());
+ }
 }
 
-// ── RESET ─────────────────────────────────────────────────────────────────────
 function confirmReset() {
-  document.getElementById('modal-overlay').classList.add('visible');
+ document.getElementById('modal-overlay').classList.add('visible');
 }
 
 function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('visible');
+ document.getElementById('modal-overlay').classList.remove('visible');
 }
 
 function doReset() {
-  closeModal();
-  clearInterval(timerInterval);
-  activeTimerMatchId = null;
-  tournamentStarted  = false;
+ closeModal();
+ clearInterval(timerInterval);
+ activeTimerMatchId = null;
+ tournamentStarted = false;
 
-  document.getElementById('setup-section').style.display     = 'block';
-  document.getElementById('standings-section').style.display = 'none';
-  document.getElementById('matches-section').style.display   = 'none';
-  document.getElementById('final-section').classList.remove('visible');
-  document.getElementById('fab-reset').style.display         = 'none';
-  document.getElementById('fab-inline-reset').style.display  = 'none';
-  document.getElementById('header-sub').textContent          = 'Konfigurera din turnering nedan';
-  document.getElementById('progress-label').textContent      = 'Redo att köra';
-  document.getElementById('top-progress').style.width        = '0%';
-  document.getElementById('confetti-wrap').innerHTML         = '';
-  document.getElementById('matches-grid').innerHTML          = '';
+ document.getElementById('setup-section').style.display = 'block';
+ document.getElementById('standings-section').style.display = 'none';
+ document.getElementById('matches-section').style.display = 'none';
+ document.getElementById('final-section').classList.remove('visible');
+ document.getElementById('fab-reset').style.display = 'none';
+ document.getElementById('fab-inline-reset').style.display = 'none';
+ document.getElementById('header-sub').textContent = 'Konfigurera din turnering nedan';
+ document.getElementById('progress-label').textContent = 'Redo att köra';
+ document.getElementById('top-progress').style.width = '0%';
+ document.getElementById('confetti-wrap').innerHTML = '';
+ document.getElementById('matches-grid').innerHTML = '';
 
-  initTeamInputs();
-  window.scrollTo({ top:0, behavior:'smooth' });
+ initTeamInputs();
+ window.scrollTo({ top:0, behavior:'smooth' });
 }
 
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
+ if (e.target === this) closeModal();
 });
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 initTeamInputs();
 updateMatchCount();
 </script>
