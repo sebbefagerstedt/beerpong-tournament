@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🍺 BEERPONG </title>
+<title>🍺 ARVIDS SISTA SVENSEXA</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
  :root {
@@ -140,6 +140,7 @@ transition: border-color 0.25s, box-shadow 0.25s;
 }
 .match-card { position: relative; }
 .match-card.running { border-color: var(--amber); box-shadow: 0 0 20px rgba(245,166,35,0.1); }
+.match-card.paused { border-color: var(--muted); box-shadow: 0 0 12px rgba(85,85,85,0.15); }
 .match-card.done { border-color: #1e3a1e; }
 .match-card.overtime { border-color: var(--red); box-shadow: 0 0 20px rgba(255,77,77,0.15); }
 
@@ -529,11 +530,11 @@ function startTournament() {
  cupsA: 0, cupsB: 0,
  done: false, winner: null,
  durationMinutes: defaultMinutes,
- secondsLeft: defaultMinutes * 60,
+ timerStartedAt: null,
+ pausedSecondsLeft: defaultMinutes * 60,
  timerRunning: false,
  timerStarted: false,
  overtime: false,
- overtimeSeconds: 0,
  });
 
  // Shuffle match order
@@ -568,13 +569,31 @@ function updateTopProgress() {
  `${done} / ${total} matcher klara`;
 }
 
+function getSecondsLeft(m) {
+ if (!m.timerStarted) return m.pausedSecondsLeft;
+ if (!m.timerRunning) return m.pausedSecondsLeft;
+ const elapsed = (Date.now() - m.timerStartedAt) / 1000;
+ return Math.max(0, m.pausedSecondsLeft - elapsed);
+}
+
+function isOvertime(m) {
+ return m.timerStarted && getSecondsLeft(m) <= 0;
+}
+
+function getOvertimeSeconds(m) {
+ if (!m.timerRunning) return 0;
+ const elapsed = (Date.now() - m.timerStartedAt) / 1000;
+ return Math.max(0, elapsed - m.pausedSecondsLeft);
+}
+
 function startMatchTimer(matchId) {
  const m = matches[matchId];
  if (m.done || m.timerRunning) return;
  m.timerRunning = true;
  m.timerStarted = true;
+ m.timerStartedAt = Date.now();
  clearInterval(timerIntervals[matchId]);
- timerIntervals[matchId] = setInterval(() => tickMatchTimer(matchId), 1000);
+ timerIntervals[matchId] = setInterval(() => renderMatchTimerStrip(matchId), 1000);
  renderMatchCard(matchId);
  saveState();
 }
@@ -582,7 +601,11 @@ function startMatchTimer(matchId) {
 function pauseMatchTimer(matchId) {
  const m = matches[matchId];
  if (!m) return;
+ if (m.timerRunning) {
+   m.pausedSecondsLeft = Math.max(0, getSecondsLeft(m));
+ }
  m.timerRunning = false;
+ m.timerStartedAt = null;
  clearInterval(timerIntervals[matchId]);
  delete timerIntervals[matchId];
  renderMatchCard(matchId);
@@ -597,11 +620,13 @@ function toggleMatchTimer(matchId) {
 
 function resetMatchTimer(matchId) {
  const m = matches[matchId];
- pauseMatchTimer(matchId);
- m.secondsLeft = m.durationMinutes * 60;
+ m.timerRunning = false;
+ m.timerStartedAt = null;
+ m.pausedSecondsLeft = m.durationMinutes * 60;
  m.timerStarted = false;
  m.overtime = false;
- m.overtimeSeconds = 0;
+ clearInterval(timerIntervals[matchId]);
+ delete timerIntervals[matchId];
  renderMatchCard(matchId);
  saveState();
 }
@@ -610,45 +635,37 @@ function changeMatchDuration(matchId, delta) {
  const m = matches[matchId];
  if (m.timerStarted) return;
  m.durationMinutes = Math.max(1, Math.min(60, m.durationMinutes + delta));
- m.secondsLeft = m.durationMinutes * 60;
+ m.pausedSecondsLeft = m.durationMinutes * 60;
  renderMatchCard(matchId);
 }
 
-function tickMatchTimer(matchId) {
- const m = matches[matchId];
- if (!m || m.done) { clearInterval(timerIntervals[matchId]); delete timerIntervals[matchId]; return; }
- if (m.secondsLeft > 0) {
- m.secondsLeft--;
- } else {
- m.overtime = true;
- m.overtimeSeconds++;
- }
- renderMatchTimerStrip(matchId);
-}
-
 function timerDisplayText(m) {
- if (m.overtime) {
- const s = m.overtimeSeconds;
+ const ot = isOvertime(m);
+ if (ot && m.timerRunning) {
+ const s = Math.floor(getOvertimeSeconds(m));
  return `+${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
  }
- const s = m.secondsLeft;
+ if (ot && !m.timerRunning) {
+ return `+00:00`;
+ }
+ const s = Math.ceil(getSecondsLeft(m));
  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 }
 
 function timerDisplayClass(m) {
- if (m.overtime) return 'overtime-label';
- if (m.secondsLeft <= 30 && m.timerStarted) return 'warning';
+ if (isOvertime(m)) return 'overtime-label';
+ if (getSecondsLeft(m) <= 30 && m.timerStarted) return 'warning';
  return '';
 }
 
 function timerBarPct(m) {
- if (m.overtime) return 100;
+ if (isOvertime(m)) return 100;
  const total = m.durationMinutes * 60;
- return total > 0 ? (m.secondsLeft / total) * 100 : 100;
+ return total > 0 ? (getSecondsLeft(m) / total) * 100 : 100;
 }
 
 function timerBarColor(m) {
- if (m.overtime) return 'var(--red)';
+ if (isOvertime(m)) return 'var(--red)';
  const pct = timerBarPct(m);
  if (pct <= 20) return 'var(--red)';
  if (pct <= 40) return '#f0c040';
@@ -675,7 +692,7 @@ function renderMatchCard(matchId) {
  Array.from({length: cupsToWin}, (_, c) =>
  `<div class="cup-viz-item${c < count ? ' scored' : ''}"></div>`).join('');
 
- const statusClass = m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'running' : (matches.find(x => !x.done) === m ? 'next' : 'pending');
+ const statusClass = m.done ? 'done' : isOvertime(m) ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'paused' : (matches.find(x => !x.done) === m ? 'next' : 'pending');
 
  const timerStripHtml = m.done ? '' : `
  <div class="match-timer-strip" id="strip-${m.id}">
@@ -767,7 +784,7 @@ function renderMatchTimerStrip(matchId) {
  }
  const card = document.getElementById(`match-${matchId}`);
  if (card) {
- card.className = `match-card ${m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : 'pending'}`;
+ card.className = `match-card ${m.done ? 'done' : isOvertime(m) ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'paused' : 'pending'}`;
  }
 }
 
@@ -910,7 +927,7 @@ function doReset() {
  document.getElementById('final-section').classList.remove('visible');
  document.getElementById('fab-reset').style.display = 'none';
  document.getElementById('fab-inline-reset').style.display = 'none';
- document.getElementById('header-sub').textContent = 'Den ultimata turneringssidan';
+ document.getElementById('header-sub').textContent = 'Den ultimata beer pong-turneringen';
  document.getElementById('progress-label').textContent = 'Redo att köra';
  document.getElementById('top-progress').style.width = '0%';
  document.getElementById('confetti-wrap').innerHTML = '';
@@ -1008,7 +1025,7 @@ function showRoomBanner() {
 
 function getStateSnapshot() {
  return { numTeams, cupsToWin, defaultMinutes, teams,
-   matches: matches.map(m => ({ ...m, timerRunning: false })),
+   matches: matches.map(m => ({ ...m })),
    stats, tournamentStarted };
 }
 
@@ -1033,17 +1050,16 @@ function onRemoteState(snapshot) {
  numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
  teams = s.teams; stats = s.stats; tournamentStarted = s.tournamentStarted;
 
- // Sync timer state from remote
- const localRunning = {};
- matches.forEach(m => { if (timerIntervals[m.id]) localRunning[m.id] = true; });
+ // Clear all local timer intervals
+ Object.keys(timerIntervals).forEach(id => clearInterval(timerIntervals[id]));
+ timerIntervals = {};
+
  matches = s.matches;
- // Restart local timers for matches that were running
+
+ // Start local render intervals for any running timers
  matches.forEach(m => {
-   if (m.timerStarted && !m.done && !m.overtime && m.secondsLeft > 0 && localRunning[m.id]) {
-     m.timerRunning = true;
-     if (!timerIntervals[m.id]) {
-       timerIntervals[m.id] = setInterval(() => tickMatchTimer(m.id), 1000);
-     }
+   if (m.timerRunning && !m.done) {
+     timerIntervals[m.id] = setInterval(() => renderMatchTimerStrip(m.id), 1000);
    }
  });
 
