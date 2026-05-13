@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🍺 BEER PONG TURNERING</title>
+<title>🍺 ARVIDS SISTA SVENSEXA</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
  :root {
@@ -132,6 +132,13 @@ border-radius: 6px; overflow: hidden;
 transition: border-color 0.25s, box-shadow 0.25s;
 }
 .match-card.pending { border-color: var(--border); }
+.match-card.next { border-color: var(--green); box-shadow: 0 0 20px rgba(57,211,83,0.15); }
+.match-card.next::before {
+ content: '▶ NÄSTA'; position: absolute; top: -10px; left: 12px;
+ background: var(--green); color: #000; font-family: 'Bebas Neue', cursive;
+ font-size: 0.7rem; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 2px;
+}
+.match-card { position: relative; }
 .match-card.running { border-color: var(--amber); box-shadow: 0 0 20px rgba(245,166,35,0.1); }
 .match-card.done { border-color: #1e3a1e; }
 .match-card.overtime { border-color: var(--red); box-shadow: 0 0 20px rgba(255,77,77,0.15); }
@@ -261,19 +268,23 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 
 @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 .animate-in { animation: slideIn 0.35s ease forwards; }
+
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(2px)} }
+.shake { animation: shake 0.4s ease; }
 </style>
 </head>
 <body>
 
 <header>
- <h1>🍺 BEER PONG</h1>
- <p id="header-sub">Konfigurera din turnering nedan</p>
+ <h1>🍺 ARVIDS SISTA SVENSEXA</h1>
+ <p id="header-sub">Den ultimata beer pong-turneringen</p>
 </header>
 
 <div id="top-bar">
  <span class="progress-label" id="progress-label">Redo att köra</span>
  <div class="top-progress-wrap"><div id="top-progress"></div></div>
  <button class="btn muted sm" id="fab-inline-reset" onclick="confirmReset()" style="display:none">↺ Återställ</button>
+ <button class="btn sm" onclick="toggleFullscreen()">⛶ Fullskärm</button>
 </div>
 
 <main>
@@ -378,6 +389,27 @@ let tournamentStarted = false;
 
 let activeTimerMatchId = null;
 let timerInterval = null;
+let prevLeader = null;
+
+const STORAGE_KEY = 'beerpong_state';
+
+function saveState() {
+ if (!tournamentStarted) { localStorage.removeItem(STORAGE_KEY); return; }
+ localStorage.setItem(STORAGE_KEY, JSON.stringify({
+ numTeams, cupsToWin, defaultMinutes, teams, matches: matches.map(m => ({...m, timerRunning: false})), stats, tournamentStarted
+ }));
+}
+
+function loadState() {
+ const raw = localStorage.getItem(STORAGE_KEY);
+ if (!raw) return false;
+ try {
+ const s = JSON.parse(raw);
+ numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
+ teams = s.teams; matches = s.matches; stats = s.stats; tournamentStarted = s.tournamentStarted;
+ return tournamentStarted;
+ } catch(e) { return false; }
+}
 
 function changeTeams(d) {
  numTeams = Math.max(2, Math.min(12, numTeams + d));
@@ -450,6 +482,13 @@ function startTournament() {
  overtimeSeconds: 0,
  });
 
+ // Shuffle match order
+ for (let i = matches.length - 1; i > 0; i--) {
+ const j = Math.floor(Math.random() * (i + 1));
+ [matches[i], matches[j]] = [matches[j], matches[i]];
+ }
+ matches.forEach((m, i) => m.id = i);
+
  document.getElementById('setup-section').style.display = 'none';
  document.getElementById('standings-section').style.display = 'block';
  document.getElementById('matches-section').style.display = 'block';
@@ -463,6 +502,7 @@ function startTournament() {
  renderMatches();
  renderStandings();
  updateTopProgress();
+ saveState();
 }
 
 function updateTopProgress() {
@@ -584,7 +624,7 @@ function renderMatchCard(matchId) {
  Array.from({length: cupsToWin}, (_, c) =>
  `<div class="cup-viz-item${c < count ? ' scored' : ''}"></div>`).join('');
 
- const statusClass = m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'running' : 'pending';
+ const statusClass = m.done ? 'done' : m.overtime ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'running' : (matches.find(x => !x.done) === m ? 'next' : 'pending');
 
  const timerStripHtml = m.done ? '' : `
  <div class="match-timer-strip" id="strip-${m.id}">
@@ -701,14 +741,15 @@ function setCups(matchId, side, cups) {
  checkFinished();
  }
  renderMatchCard(matchId);
+ saveState();
 }
 
 function applyStats(m) {
  const sa = stats[m.a], sb = stats[m.b];
  sa.played++; sb.played++;
  sa.cupsFor += m.cupsA; sb.cupsFor += m.cupsB;
- if (m.winner === m.a) { sa.wins++; sa.points += 3; sb.losses++; }
- else { sb.wins++; sb.points += 3; sa.losses++; }
+ if (m.winner === m.a) { sa.wins++; sa.points += 1; sb.losses++; }
+ else { sb.wins++; sb.points += 1; sa.losses++; }
 }
 
 function renderStandings() {
@@ -716,6 +757,15 @@ function renderStandings() {
  const sa = stats[a], sb = stats[b];
  return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
  });
+
+ const newLeader = sorted[0];
+ const section = document.getElementById('standings-section');
+ if (prevLeader && newLeader !== prevLeader && matches.some(m => m.done)) {
+ section.classList.remove('shake');
+ void section.offsetWidth;
+ section.classList.add('shake');
+ }
+ prevLeader = newLeader;
 
  const body = document.getElementById('standings-body');
  body.innerHTML = '';
@@ -790,6 +840,11 @@ function confirmReset() {
  document.getElementById('modal-overlay').classList.add('visible');
 }
 
+function toggleFullscreen() {
+ if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+ else document.exitFullscreen();
+}
+
 function closeModal() {
  document.getElementById('modal-overlay').classList.remove('visible');
 }
@@ -806,7 +861,7 @@ function doReset() {
  document.getElementById('final-section').classList.remove('visible');
  document.getElementById('fab-reset').style.display = 'none';
  document.getElementById('fab-inline-reset').style.display = 'none';
- document.getElementById('header-sub').textContent = 'Konfigurera din turnering nedan';
+ document.getElementById('header-sub').textContent = 'Den ultimata beer pong-turneringen';
  document.getElementById('progress-label').textContent = 'Redo att köra';
  document.getElementById('top-progress').style.width = '0%';
  document.getElementById('confetti-wrap').innerHTML = '';
@@ -814,14 +869,29 @@ function doReset() {
 
  initTeamInputs();
  window.scrollTo({ top:0, behavior:'smooth' });
+ saveState();
 }
 
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
  if (e.target === this) closeModal();
 });
 
-initTeamInputs();
-updateMatchCount();
+if (loadState()) {
+ document.getElementById('setup-section').style.display = 'none';
+ document.getElementById('standings-section').style.display = 'block';
+ document.getElementById('matches-section').style.display = 'block';
+ document.getElementById('fab-reset').style.display = 'block';
+ document.getElementById('fab-inline-reset').style.display = 'inline-block';
+ document.getElementById('header-sub').textContent =
+ `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ renderMatches();
+ renderStandings();
+ updateTopProgress();
+ if (matches.every(m => m.done)) showFinal();
+} else {
+ initTeamInputs();
+ updateMatchCount();
+}
 </script>
 
 </body>
