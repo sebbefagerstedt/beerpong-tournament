@@ -387,8 +387,7 @@ let matches = [];
 let stats = {};
 let tournamentStarted = false;
 
-let activeTimerMatchId = null;
-let timerInterval = null;
+let timerIntervals = {};
 let prevLeader = null;
 
 const STORAGE_KEY = 'beerpong_state';
@@ -515,16 +514,12 @@ function updateTopProgress() {
 }
 
 function startMatchTimer(matchId) {
- if (activeTimerMatchId !== null && activeTimerMatchId !== matchId) {
- pauseMatchTimer(activeTimerMatchId);
- }
  const m = matches[matchId];
- if (m.done) return;
+ if (m.done || m.timerRunning) return;
  m.timerRunning = true;
  m.timerStarted = true;
- activeTimerMatchId = matchId;
- clearInterval(timerInterval);
- timerInterval = setInterval(() => tickMatchTimer(matchId), 1000);
+ clearInterval(timerIntervals[matchId]);
+ timerIntervals[matchId] = setInterval(() => tickMatchTimer(matchId), 1000);
  renderMatchCard(matchId);
 }
 
@@ -532,10 +527,8 @@ function pauseMatchTimer(matchId) {
  const m = matches[matchId];
  if (!m) return;
  m.timerRunning = false;
- if (activeTimerMatchId === matchId) {
- clearInterval(timerInterval);
- activeTimerMatchId = null;
- }
+ clearInterval(timerIntervals[matchId]);
+ delete timerIntervals[matchId];
  renderMatchCard(matchId);
 }
 
@@ -565,7 +558,7 @@ function changeMatchDuration(matchId, delta) {
 
 function tickMatchTimer(matchId) {
  const m = matches[matchId];
- if (!m || m.done) { clearInterval(timerInterval); return; }
+ if (!m || m.done) { clearInterval(timerIntervals[matchId]); delete timerIntervals[matchId]; return; }
  if (m.secondsLeft > 0) {
  m.secondsLeft--;
  } else {
@@ -730,10 +723,8 @@ function setCups(matchId, side, cups) {
  if (m.cupsA >= cupsToWin) { m.cupsA = cupsToWin; m.winner = m.a; }
  else { m.cupsB = cupsToWin; m.winner = m.b; }
  m.done = true;
- if (activeTimerMatchId === matchId) {
- clearInterval(timerInterval);
- activeTimerMatchId = null;
- }
+ clearInterval(timerIntervals[matchId]);
+ delete timerIntervals[matchId];
  m.timerRunning = false;
  applyStats(m);
  renderStandings();
@@ -851,8 +842,8 @@ function closeModal() {
 
 function doReset() {
  closeModal();
- clearInterval(timerInterval);
- activeTimerMatchId = null;
+ Object.keys(timerIntervals).forEach(id => clearInterval(timerIntervals[id]));
+ timerIntervals = {};
  tournamentStarted = false;
 
  document.getElementById('setup-section').style.display = 'block';
