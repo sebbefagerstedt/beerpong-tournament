@@ -251,6 +251,35 @@ text-align: center; transform: scale(0.92); transition: transform 0.2s;
 #modal-box p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.5rem; }
 #modal-box .flex-row { justify-content: center; }
 
+#room-modal {
+position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+display: flex; align-items: center; justify-content: center;
+z-index: 950; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+#room-modal.visible { opacity: 1; pointer-events: all; }
+#room-modal-box {
+background: var(--card); border: 1px solid var(--amber);
+border-radius: 6px; padding: 2rem 2.5rem; max-width: 380px; width: 90%;
+text-align: center; transform: scale(0.92); transition: transform 0.2s;
+}
+#room-modal.visible #room-modal-box { transform: scale(1); }
+#room-modal-box h3 { font-family: 'Bebas Neue', cursive; font-size: 1.9rem; color: var(--amber); letter-spacing: 0.08em; margin-bottom: 1rem; }
+#room-modal-box input {
+background: var(--bg); border: 1px solid var(--border); border-radius: 3px;
+color: var(--text); font-family: 'DM Mono', monospace; font-size: 1rem;
+padding: 0.6rem 1rem; width: 100%; margin-bottom: 0.7rem; text-align: center;
+letter-spacing: 0.2em;
+}
+#room-modal-box input::placeholder { color: var(--muted); letter-spacing: 0.1em; }
+#room-modal-box .room-error { color: var(--red); font-size: 0.72rem; min-height: 1.2em; margin-bottom: 0.5rem; }
+#room-banner {
+display: none; align-items: center; justify-content: center; gap: 0.8rem;
+padding: 0.5rem 1rem; background: #1a2e1a; border-bottom: 1px solid #2a4a2a;
+font-size: 0.72rem; color: var(--green); letter-spacing: 0.1em;
+}
+#room-banner.visible { display: flex; }
+#room-banner .room-code { font-family: 'Bebas Neue', cursive; font-size: 1.1rem; letter-spacing: 0.15em; }
+
 #fab-reset {
 position: fixed; bottom: 1.5rem; right: 1.5rem;
 background: var(--card); border: 1px solid var(--border);
@@ -285,6 +314,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  <div class="top-progress-wrap"><div id="top-progress"></div></div>
  <button class="btn muted sm" id="fab-inline-reset" onclick="confirmReset()" style="display:none">↺ Återställ</button>
  <button class="btn sm" onclick="toggleFullscreen()">⛶ Fullskärm</button>
+ <button class="btn sm success" id="btn-online" onclick="openRoomModal()">🔗 Online</button>
 </div>
 
 <main>
@@ -356,7 +386,31 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 
 </main>
 
+<div id="room-banner">
+ <span>🔗 Rum: <span class="room-code" id="room-code-display"></span></span>
+ <span>PIN: <span class="room-code" id="room-pin-display"></span></span>
+ <button class="btn sm danger" onclick="leaveRoom()">LÄMNA RUM</button>
+</div>
+
 <button id="fab-reset" onclick="confirmReset()">↺ Återställ turnering</button>
+
+<div id="room-modal">
+ <div id="room-modal-box">
+ <h3>🔗 Online-rum</h3>
+ <div id="room-create-view">
+ <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem">Skapa ett rum så kan andra gå med via rum-ID + PIN</p>
+ <button class="btn success" onclick="createRoom()" id="btn-create-room">SKAPA RUM</button>
+ <div style="margin:1.2rem 0 0.8rem;font-size:0.65rem;color:var(--muted);letter-spacing:0.2em">— ELLER GÅ MED —</div>
+ <input id="join-room-id" placeholder="RUM-ID" maxlength="6">
+ <input id="join-room-pin" placeholder="PIN" maxlength="4">
+ <div class="room-error" id="room-error"></div>
+ <button class="btn" onclick="joinRoom()">GÅ MED</button>
+ </div>
+ <div style="margin-top:1rem">
+ <button class="btn muted sm" onclick="closeRoomModal()">AVBRYT (LOKAL TURNERING)</button>
+ </div>
+ </div>
+</div>
 
 <div id="modal-overlay">
  <div id="modal-box">
@@ -883,6 +937,117 @@ if (loadState()) {
  initTeamInputs();
  updateMatchCount();
 }
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyAlPnHDgobMP_lUGb8ZCyAbO9BCoQO808Y",
+ authDomain: "beerpong-svensexa.firebaseapp.com",
+ databaseURL: "https://beerpong-svensexa-default-rtdb.europe-west1.firebasedatabase.app",
+ projectId: "beerpong-svensexa",
+ storageBucket: "beerpong-svensexa.firebasestorage.app",
+ messagingSenderId: "319107496615",
+ appId: "1:319107496615:web:898fc0d5e03d33ccf7b982"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let roomId = null;
+let roomPin = null;
+let roomRef = null;
+let stateRef = null;
+let isOnline = false;
+let ignoreNextSync = false;
+
+function generateId(len) {
+ const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+ return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+window.openRoomModal = function() {
+ document.getElementById('room-modal').classList.add('visible');
+ document.getElementById('room-error').textContent = '';
+};
+
+window.closeRoomModal = function() {
+ document.getElementById('room-modal').classList.remove('visible');
+};
+
+function showRoomBanner() {
+ document.getElementById('room-code-display').textContent = roomId;
+ document.getElementById('room-pin-display').textContent = roomPin;
+ document.getElementById('room-banner').classList.add('visible');
+ document.getElementById('btn-online').style.display = 'none';
+}
+
+function getStateSnapshot() {
+ return { numTeams, cupsToWin, defaultMinutes, teams, matches: matches.map(m => ({...m, timerRunning: false})), stats, tournamentStarted };
+}
+
+function pushState() {
+ if (!isOnline || !stateRef) return;
+ ignoreNextSync = true;
+ set(stateRef, getStateSnapshot());
+}
+
+function onRemoteState(snapshot) {
+ if (ignoreNextSync) { ignoreNextSync = false; return; }
+ const s = snapshot.val();
+ if (!s || !s.tournamentStarted) return;
+ numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
+ teams = s.teams; matches = s.matches; stats = s.stats; tournamentStarted = s.tournamentStarted;
+
+ document.getElementById('setup-section').style.display = 'none';
+ document.getElementById('standings-section').style.display = 'block';
+ document.getElementById('matches-section').style.display = 'block';
+ document.getElementById('fab-reset').style.display = 'block';
+ document.getElementById('fab-inline-reset').style.display = 'inline-block';
+ document.getElementById('header-sub').textContent = `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ renderMatches(); renderStandings(); updateTopProgress();
+ if (matches.every(m => m.done)) showFinal();
+}
+
+window.createRoom = function() {
+ roomId = generateId(5);
+ roomPin = generateId(4);
+ isOnline = true;
+ stateRef = ref(db, 'rooms/' + roomId + '/state');
+ set(ref(db, 'rooms/' + roomId + '/pin'), roomPin);
+ set(stateRef, getStateSnapshot());
+ onValue(stateRef, onRemoteState);
+ closeRoomModal();
+ showRoomBanner();
+};
+
+window.joinRoom = function() {
+ const id = document.getElementById('join-room-id').value.trim().toUpperCase();
+ const pin = document.getElementById('join-room-pin').value.trim().toUpperCase();
+ if (!id || !pin) { document.getElementById('room-error').textContent = 'Fyll i båda fälten'; return; }
+ get(ref(db, 'rooms/' + id + '/pin')).then(snap => {
+   if (!snap.exists()) { document.getElementById('room-error').textContent = 'Rummet finns inte'; return; }
+   if (snap.val() !== pin) { document.getElementById('room-error').textContent = 'Fel PIN'; return; }
+   roomId = id; roomPin = pin; isOnline = true;
+   stateRef = ref(db, 'rooms/' + roomId + '/state');
+   onValue(stateRef, onRemoteState);
+   closeRoomModal();
+   showRoomBanner();
+ });
+};
+
+window.leaveRoom = function() {
+ if (stateRef) off(stateRef);
+ roomId = null; roomPin = null; stateRef = null; isOnline = false;
+ document.getElementById('room-banner').classList.remove('visible');
+ document.getElementById('btn-online').style.display = '';
+};
+
+// Patch saveState to also push to Firebase
+const _origSaveState = saveState;
+saveState = function() { _origSaveState(); pushState(); };
 </script>
 
 </body>
