@@ -301,6 +301,15 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(2px)} }
 .shake { animation: shake 0.4s ease; }
+
+.spectator-mode .cup,
+.spectator-mode .match-start-row .btn,
+.spectator-mode .match-timer-actions .btn,
+.spectator-mode .mini-stepper button,
+.spectator-mode .match-start-row,
+.spectator-mode #fab-reset,
+.spectator-mode #fab-inline-reset { pointer-events: none; opacity: 0.4; }
+.spectator-mode .cup { cursor: default; }
 </style>
 </head>
 <body>
@@ -404,7 +413,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  <button class="btn success" onclick="createRoom()" id="btn-create-room">SKAPA RUM</button>
  <div style="margin:1.2rem 0 0.8rem;font-size:0.65rem;color:var(--muted);letter-spacing:0.2em">— ELLER GÅ MED —</div>
  <input id="join-room-id" placeholder="RUM-ID" maxlength="6">
- <input id="join-room-pin" placeholder="PIN" maxlength="4">
+ <input id="join-room-pin" placeholder="PIN (värd eller åskådare)" maxlength="4">
  <div class="room-error" id="room-error"></div>
  <button class="btn" onclick="joinRoom()">GÅ MED</button>
  </div>
@@ -1009,6 +1018,7 @@ let roomPin = null;
 let stateRef = null;
 let isOnline = false;
 let isHost = false;
+let isSpectator = false;
 let ignoreNextSync = false;
 
 const ROOM_SESSION_KEY = 'beerpong_room';
@@ -1019,7 +1029,7 @@ function generateId(len) {
 }
 
 function saveRoomSession() {
- if (roomId) sessionStorage.setItem(ROOM_SESSION_KEY, JSON.stringify({ roomId, roomPin, isHost }));
+ if (roomId) sessionStorage.setItem(ROOM_SESSION_KEY, JSON.stringify({ roomId, roomPin, isHost, isSpectator }));
  else sessionStorage.removeItem(ROOM_SESSION_KEY);
 }
 
@@ -1030,6 +1040,7 @@ function connectToRoom() {
    onDisconnect(ref(db, 'rooms/' + roomId)).remove();
  }
  showRoomBanner();
+ if (isSpectator) applySpectatorMode();
 }
 
 window.openRoomModal = function() {
@@ -1043,12 +1054,31 @@ window.closeRoomModal = function() {
 
 function showRoomBanner() {
  document.getElementById('room-code-display').textContent = roomId;
- document.getElementById('room-pin-display').textContent = roomPin;
  document.getElementById('room-banner').classList.add('visible');
  document.getElementById('btn-online').style.display = 'none';
  document.getElementById('btn-end-room').style.display = isHost ? '' : 'none';
  document.getElementById('btn-leave-room').style.display = isHost ? 'none' : '';
- document.getElementById('room-pin-wrap').style.display = isHost ? '' : 'none';
+ // Show both PINs only for host
+ const pinWrap = document.getElementById('room-pin-wrap');
+ if (isHost) {
+   pinWrap.style.display = '';
+   pinWrap.innerHTML = `Värd-PIN: <span class="room-code">${roomPin}</span> · Åskådar-PIN: <span class="room-code" id="room-view-pin-display"></span>`;
+   get(ref(db, 'rooms/' + roomId + '/viewPin')).then(snap => {
+     const el = document.getElementById('room-view-pin-display');
+     if (el && snap.exists()) el.textContent = snap.val();
+   });
+ } else {
+   pinWrap.style.display = 'none';
+ }
+ if (isSpectator) {
+   document.getElementById('room-banner').style.background = '#1a1a2e';
+   document.getElementById('room-banner').style.borderColor = '#2a2a4a';
+   document.getElementById('room-banner').style.color = 'var(--muted)';
+ }
+}
+
+function applySpectatorMode() {
+ document.body.classList.add('spectator-mode');
 }
 
 function getStateSnapshot() {
@@ -1058,7 +1088,7 @@ function getStateSnapshot() {
 }
 
 function pushState() {
- if (!isOnline || !stateRef) return;
+ if (!isOnline || !stateRef || isSpectator) return;
  ignoreNextSync = true;
  set(stateRef, getStateSnapshot());
 }
@@ -1067,7 +1097,6 @@ function onRemoteState(snapshot) {
  if (ignoreNextSync) { ignoreNextSync = false; return; }
  const s = snapshot.val();
  if (!s) {
-   // Room was deleted (host ended it)
    if (!isHost) {
      alert('Värden har avslutat turneringen.');
      doLeaveRoom();
@@ -1075,7 +1104,6 @@ function onRemoteState(snapshot) {
    return;
  }
  if (!s.tournamentStarted) {
-   // Show waiting state for guests
    if (!isHost) {
      document.getElementById('setup-section').style.display = 'none';
      document.getElementById('standings-section').style.display = 'none';
@@ -1087,10 +1115,8 @@ function onRemoteState(snapshot) {
  numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
  teams = s.teams; stats = s.stats; tournamentStarted = s.tournamentStarted;
 
- const prevMatches = matches;
  matches = s.matches;
 
- // Preserve locally running timers — only restart intervals for newly running ones
  matches.forEach(m => {
    if (m.timerRunning && !m.done && !timerIntervals[m.id]) {
      timerIntervals[m.id] = setInterval(() => renderMatchTimerStrip(m.id), 1000);
@@ -1104,11 +1130,10 @@ function onRemoteState(snapshot) {
  document.getElementById('setup-section').style.display = 'none';
  document.getElementById('standings-section').style.display = 'block';
  document.getElementById('matches-section').style.display = 'block';
- document.getElementById('fab-reset').style.display = 'block';
- document.getElementById('fab-inline-reset').style.display = 'inline-block';
+ document.getElementById('fab-reset').style.display = isSpectator ? 'none' : 'block';
+ document.getElementById('fab-inline-reset').style.display = isSpectator ? 'none' : 'inline-block';
  document.getElementById('header-sub').textContent = `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
 
- // If matches grid already has children, just update individual cards
  const grid = document.getElementById('matches-grid');
  if (grid.children.length === matches.length) {
    matches.forEach(m => renderMatchCard(m.id));
@@ -1122,10 +1147,13 @@ function onRemoteState(snapshot) {
 window.createRoom = function() {
  roomId = generateId(5);
  roomPin = generateId(4);
+ const viewPin = generateId(4);
  isOnline = true;
  isHost = true;
+ isSpectator = false;
  saveRoomSession();
- set(ref(db, 'rooms/' + roomId + '/pin'), roomPin);
+ set(ref(db, 'rooms/' + roomId + '/hostPin'), roomPin);
+ set(ref(db, 'rooms/' + roomId + '/viewPin'), viewPin);
  connectToRoom();
  pushState();
  closeRoomModal();
@@ -1135,10 +1163,18 @@ window.joinRoom = function() {
  const id = document.getElementById('join-room-id').value.trim().toUpperCase();
  const pin = document.getElementById('join-room-pin').value.trim().toUpperCase();
  if (!id || !pin) { document.getElementById('room-error').textContent = 'Fyll i båda fälten'; return; }
- get(ref(db, 'rooms/' + id + '/pin')).then(snap => {
+
+ const roomRoot = ref(db, 'rooms/' + id);
+ get(roomRoot).then(snap => {
    if (!snap.exists()) { document.getElementById('room-error').textContent = 'Rummet finns inte'; return; }
-   if (snap.val() !== pin) { document.getElementById('room-error').textContent = 'Fel PIN'; return; }
-   roomId = id; roomPin = pin; isOnline = true; isHost = false;
+   const data = snap.val();
+   if (pin === data.hostPin) {
+     roomId = id; roomPin = pin; isOnline = true; isHost = true; isSpectator = false;
+   } else if (pin === data.viewPin) {
+     roomId = id; roomPin = pin; isOnline = true; isHost = false; isSpectator = true;
+   } else {
+     document.getElementById('room-error').textContent = 'Fel PIN'; return;
+   }
    saveRoomSession();
    connectToRoom();
    closeRoomModal();
@@ -1147,10 +1183,11 @@ window.joinRoom = function() {
 
 function doLeaveRoom() {
  if (stateRef) off(stateRef);
- roomId = null; roomPin = null; stateRef = null; isOnline = false; isHost = false;
+ roomId = null; roomPin = null; stateRef = null; isOnline = false; isHost = false; isSpectator = false;
  sessionStorage.removeItem(ROOM_SESSION_KEY);
  document.getElementById('room-banner').classList.remove('visible');
  document.getElementById('btn-online').style.display = '';
+ document.body.classList.remove('spectator-mode');
 }
 
 window.leaveRoom = function() { doLeaveRoom(); };
@@ -1170,7 +1207,7 @@ const saved = sessionStorage.getItem(ROOM_SESSION_KEY);
 if (saved) {
  try {
    const r = JSON.parse(saved);
-   roomId = r.roomId; roomPin = r.roomPin; isHost = r.isHost; isOnline = true;
+   roomId = r.roomId; roomPin = r.roomPin; isHost = r.isHost; isSpectator = r.isSpectator || false; isOnline = true;
    connectToRoom();
  } catch(e) { sessionStorage.removeItem(ROOM_SESSION_KEY); }
 }
