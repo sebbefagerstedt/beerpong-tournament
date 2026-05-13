@@ -6,21 +6,30 @@ Hemsida: https://sebbefagerstedt.github.io/beerpong-tournament/
 ## Funktioner
 
 - Round-robin-turnering med valfritt antal lag (2–12)
-- Timer per match med övertid
+- Timer per match med övertid (timestamp-baserad, synkar korrekt mellan enheter)
 - Live-tabell med poäng och muggar
-- **Online-läge** — skapa ett rum så kan andra gå med via rum-ID + PIN
-- Fungerar på mobil och desktop
+- Möjlighet att ändra resultat även efter avslutad match
+- **Online-läge** med rum-ID och rollbaserad åtkomst
+
+## Roller
+
+| Roll | Åtkomst |
+|------|---------|
+| **Värd** (skapare + de med värd-PIN) | Starta/pausa timer, ändra poäng, återställa matcher, avsluta turnering |
+| **Åskådare** (de med åskådar-PIN) | Följa turneringen live, ingen möjlighet att ändra |
 
 ## Användning
 
 ### Lokal turnering
-Öppna `beerpong.html` i en webbläsare. Ställ in lag, muggar och tid — kör igång.
+Öppna `beerpong.html` → ställ in lag, muggar och tid → kör igång.
 
 ### Online (flera enheter)
 1. Tryck **🔗 Online** → **SKAPA RUM**
-2. Dela rum-ID + PIN med de som ska följa med
-3. Gästerna öppnar sidan → **🔗 Online** → skriver in rum-ID + PIN → **GÅ MED**
-4. Alla ser turneringen i realtid och kan uppdatera poäng
+2. Du får ett rum-ID + två PIN-koder:
+   - **Värd-PIN** — dela med de som ska kunna styra turneringen
+   - **Åskådar-PIN** — dela med de som bara ska titta
+3. Andra öppnar sidan → **🔗 Online** → skriver in rum-ID + PIN → rollen bestäms automatiskt
+4. Om värden stänger fliken/tappar anslutning rensas rummet automatiskt
 
 ## Deploy
 
