@@ -445,6 +445,7 @@ let tournamentStarted = false;
 
 let timerIntervals = {};
 let prevLeader = null;
+let editingMatches = {};
 
 const STORAGE_KEY = 'beerpong_state';
 
@@ -739,6 +740,8 @@ function renderMatchCard(matchId) {
  return html + '</div>';
  };
 
+ const editing = !m.done || editingMatches[m.id];
+
  const html = `
  <div class="match-card ${statusClass}" id="match-${m.id}">
  ${timerStripHtml}
@@ -748,20 +751,21 @@ function renderMatchCard(matchId) {
  <div class="badge-dot" style="background:${aColor}"></div>
  <span>${m.a}</span>
  </div>
- ${cups('a', m.cupsA, aColor)}
+ ${editing ? cups('a', m.cupsA, aColor) : `<div class="cup-viz">${vizCups(m.cupsA)}</div>`}
  ${m.done && m.winner===m.a ? '<span class="winner-label">✓ VANN</span>' : ''}
  </div>
  <div style="text-align:center">
  <div class="match-round-label">Match ${m.id+1}</div>
  <div class="match-vs">${m.done ? `<span class="done-label">KLART</span>` : 'VS'}</div>
  ${m.done ? `<div style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--amber)">${m.cupsA}–${m.cupsB}</div>` : ''}
+ ${m.done && !editingMatches[m.id] ? `<button class="btn sm muted" onclick="openMatch(${m.id})" style="margin-top:0.4rem">✏️ ÄNDRA</button>` : ''}
  </div>
  <div class="match-team right">
  <div class="match-team-name">
  <div class="badge-dot" style="background:${bColor}"></div>
  <span>${m.b}</span>
  </div>
- ${cups('b', m.cupsB, bColor)}
+ ${editing ? cups('b', m.cupsB, bColor) : `<div class="cup-viz">${vizCups(m.cupsB)}</div>`}
  ${m.done && m.winner===m.b ? '<span class="winner-label">✓ VANN</span>' : ''}
  </div>
  </div>
@@ -786,6 +790,11 @@ function renderMatchTimerStrip(matchId) {
  if (card) {
  card.className = `match-card ${m.done ? 'done' : isOvertime(m) ? 'overtime' : m.timerRunning ? 'running' : m.timerStarted ? 'paused' : 'pending'}`;
  }
+}
+
+function openMatch(matchId) {
+ editingMatches[matchId] = true;
+ renderMatchCard(matchId);
 }
 
 function setCups(matchId, side, cups) {
