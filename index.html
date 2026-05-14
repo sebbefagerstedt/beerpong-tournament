@@ -489,9 +489,8 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 <div id="playoff-modal">
  <div id="playoff-modal-box">
  <h3>🏆 Starta slutspel</h3>
- <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format och vilka lag som ska vara med</p>
+ <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format — de bästa lagen från gruppspelet går vidare</p>
  <div class="playoff-format-btns" id="playoff-format-btns"></div>
- <div class="playoff-team-list" id="playoff-team-list"></div>
  <div class="flex-row" style="justify-content:center;gap:0.75rem">
  <button class="btn success" id="btn-confirm-playoff" onclick="confirmPlayoff()">STARTA</button>
  <button class="btn muted" onclick="closePlayoffModal()">AVBRYT</button>
@@ -1053,7 +1052,21 @@ function renderStandings() {
 }
 
 function checkFinished() {
- if (matches.every(m => m.done)) setTimeout(showFinal, 600);
+ if (matches.every(m => m.done)) setTimeout(showGroupDonePopup, 600);
+}
+
+function showGroupDonePopup() {
+ const modal = document.getElementById('playoff-modal');
+ const box = document.getElementById('playoff-modal-box');
+ box.innerHTML = `
+   <h3>🎉 Gruppspel klart!</h3>
+   <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1.5rem">Alla matcher är spelade. Vad vill du göra?</p>
+   <div class="flex-row" style="justify-content:center;gap:0.75rem;flex-wrap:wrap">
+     <button class="btn success" onclick="closePlayoffModal();openPlayoffModal()">🏆 STARTA SLUTSPEL</button>
+     <button class="btn" onclick="closePlayoffModal();showFinal()">📊 VISA SLUTRESULTAT</button>
+   </div>
+ `;
+ modal.classList.add('visible');
 }
 
 function showFinal() {
@@ -1197,7 +1210,6 @@ function startPlayoffStandalone() {
 function openPlayoffModal() {
  const modal = document.getElementById('playoff-modal');
  modal.classList.add('visible');
- playoffSelectedTeams = [];
 
  // Render format buttons
  const btnContainer = document.getElementById('playoff-format-btns');
@@ -1206,70 +1218,34 @@ function openPlayoffModal() {
    if (f.teams > teams.length) return;
    const btn = document.createElement('button');
    btn.className = 'btn sm' + (playoffSelectedFormat === f.teams ? ' active' : '');
-   btn.textContent = `${f.name} (${f.teams})`;
+   btn.textContent = `${f.name} (${f.teams} bästa)`;
    btn.onclick = () => selectPlayoffFormat(f.teams);
    btnContainer.appendChild(btn);
  });
- // Default to smallest format
  if (!playoffSelectedFormat || playoffSelectedFormat > teams.length) {
    selectPlayoffFormat(PLAYOFF_FORMATS.find(f => f.teams <= teams.length)?.teams || 2);
  } else {
    selectPlayoffFormat(playoffSelectedFormat);
  }
-
- // Render team list sorted by standings
- renderPlayoffTeamList();
 }
 
 function selectPlayoffFormat(size) {
  playoffSelectedFormat = size;
  document.querySelectorAll('#playoff-format-btns .btn').forEach(b => {
-   b.classList.toggle('active', b.textContent.includes(`(${size})`));
+   b.classList.toggle('active', b.textContent.includes(`(${size}`));
  });
- updatePlayoffConfirmBtn();
-}
-
-function renderPlayoffTeamList() {
- const sorted = [...teams].sort((a, b) => {
-   const sa = stats[a], sb = stats[b];
-   return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
- });
- const container = document.getElementById('playoff-team-list');
- container.innerHTML = '';
- sorted.forEach((t, i) => {
-   const div = document.createElement('div');
-   div.className = 'playoff-team-item' + (playoffSelectedTeams.includes(t) ? ' selected' : '');
-   div.innerHTML = `<span class="badge-dot" style="background:${stats[t].color}"></span><span>${i+1}. ${t}</span><span style="color:var(--muted);font-size:0.7rem;margin-left:auto">${stats[t].points}p</span>`;
-   div.onclick = () => togglePlayoffTeam(t);
-   container.appendChild(div);
- });
-}
-
-function togglePlayoffTeam(t) {
- const idx = playoffSelectedTeams.indexOf(t);
- if (idx >= 0) playoffSelectedTeams.splice(idx, 1);
- else playoffSelectedTeams.push(t);
- renderPlayoffTeamList();
- updatePlayoffConfirmBtn();
-}
-
-function updatePlayoffConfirmBtn() {
  const btn = document.getElementById('btn-confirm-playoff');
- const needed = playoffSelectedFormat || 2;
- btn.disabled = playoffSelectedTeams.length !== needed;
- btn.textContent = `STARTA (${playoffSelectedTeams.length}/${needed})`;
+ if (btn) btn.disabled = false;
 }
 
 function closePlayoffModal() {
  document.getElementById('playoff-modal').classList.remove('visible');
- // Restore original modal content for next use
  const box = document.getElementById('playoff-modal-box');
  if (!box.querySelector('#playoff-format-btns')) {
    box.innerHTML = `
      <h3>🏆 Starta slutspel</h3>
-     <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format och vilka lag som ska vara med</p>
+     <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format — de bästa lagen från gruppspelet går vidare</p>
      <div class="playoff-format-btns" id="playoff-format-btns"></div>
-     <div class="playoff-team-list" id="playoff-team-list"></div>
      <div class="flex-row" style="justify-content:center;gap:0.75rem">
        <button class="btn success" id="btn-confirm-playoff" onclick="confirmPlayoff()">STARTA</button>
        <button class="btn muted" onclick="closePlayoffModal()">AVBRYT</button>
@@ -1282,21 +1258,43 @@ document.getElementById('playoff-modal').addEventListener('click', function(e) {
 });
 
 function confirmPlayoff() {
- const playoffTeams = [...playoffSelectedTeams];
- closePlayoffModal();
- initPlayoff(playoffTeams, playoffSelectedFormat);
-}
+ const sorted = [...teams].sort((a, b) => {
+   const sa = stats[a], sb = stats[b];
+   if (sb.points !== sa.points) return sb.points - sa.points;
+   return sb.cupsFor - sa.cupsFor;
+ });
+ const playoffTeams = sorted.slice(0, playoffSelectedFormat || 2);
 
-function initPlayoff(playoffTeams, formatSize) {
- playoffRounds = [];
- playoffActive = true;
-
- // Shuffle/seed: first team vs last, etc.
+ // Seed so teams from different groups meet: 1 vs last, 2 vs second-to-last
+ // But swap within pairs if same-group matchup can be avoided
  const seeded = [];
  for (let i = 0; i < playoffTeams.length / 2; i++) {
    seeded.push(playoffTeams[i]);
    seeded.push(playoffTeams[playoffTeams.length - 1 - i]);
  }
+ // Fix same-group matchups by swapping opponents between pairs
+ for (let i = 0; i < seeded.length - 2; i += 2) {
+   const a = seeded[i], b = seeded[i + 1];
+   if (stats[a].group && stats[a].group === stats[b].group) {
+     for (let j = i + 2; j < seeded.length; j += 2) {
+       const c = seeded[j], d = seeded[j + 1];
+       if (stats[a].group !== stats[d].group && (!stats[c].group || stats[c].group !== stats[b].group)) {
+         seeded[i + 1] = d; seeded[j + 1] = b; break;
+       }
+       if (stats[a].group !== stats[c].group && (!stats[d].group || stats[d].group !== stats[b].group)) {
+         seeded[i + 1] = c; seeded[j] = b; break;
+       }
+     }
+   }
+ }
+
+ closePlayoffModal();
+ initPlayoff(seeded, playoffSelectedFormat);
+}
+
+function initPlayoff(seededTeams, formatSize) {
+ playoffRounds = [];
+ playoffActive = true;
 
  // Build rounds
  let currentSize = formatSize;
@@ -1307,8 +1305,8 @@ function initPlayoff(playoffTeams, formatSize) {
    for (let i = 0; i < numMatches; i++) {
      const m = {
        id: matchId++,
-       a: currentSize === formatSize ? seeded[i * 2] || null : null,
-       b: currentSize === formatSize ? seeded[i * 2 + 1] || null : null,
+       a: currentSize === formatSize ? seededTeams[i * 2] || null : null,
+       b: currentSize === formatSize ? seededTeams[i * 2 + 1] || null : null,
        cupsA: 0, cupsB: 0, done: false, winner: null,
        durationMinutes: defaultMinutes,
        timerStartedAt: null, pausedSecondsLeft: defaultMinutes * 60,
@@ -1468,8 +1466,66 @@ function showPlayoffWinner(winner) {
  const fin = document.getElementById('final-section');
  fin.classList.add('visible');
  const podium = document.getElementById('podium');
- const color = stats[winner]?.color || TEAM_COLORS[0];
- podium.innerHTML = `<div class="podium-place"><div class="podium-name" style="color:${color}">${winner}</div><div class="podium-block p1">🥇</div></div>`;
+
+ // Build full ranking: playoff placements first, then remaining by group stage
+ const placed = [];
+ // 1st: winner
+ const finalMatch = playoffRounds[playoffRounds.length - 1].matches[0];
+ const runnerUp = finalMatch.a === winner ? finalMatch.b : finalMatch.a;
+ placed.push(winner, runnerUp);
+
+ // 3rd/4th: semi losers (if semis exist)
+ if (playoffRounds.length >= 2) {
+   const semiRound = playoffRounds[playoffRounds.length - 2];
+   const semiLosers = semiRound.matches.filter(m => m.done).map(m => m.winner === m.a ? m.b : m.a);
+   placed.push(...semiLosers);
+ }
+
+ // Earlier round losers
+ for (let r = playoffRounds.length - 3; r >= 0; r--) {
+   const losers = playoffRounds[r].matches.filter(m => m.done).map(m => m.winner === m.a ? m.b : m.a);
+   placed.push(...losers);
+ }
+
+ // Remaining teams not in playoff, sorted by group stage
+ const sorted = [...teams].sort((a, b) => {
+   const sa = stats[a], sb = stats[b];
+   return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
+ });
+ const remaining = sorted.filter(t => !placed.includes(t));
+ const fullRanking = [...placed, ...remaining];
+
+ // Podium (top 3)
+ const top3 = [fullRanking[1], fullRanking[0], fullRanking[2]];
+ const classes = ['p2','p1','p3'];
+ const labels = ['🥈','🥇','🥉'];
+ const heights = ['65px','90px','45px'];
+
+ podium.innerHTML = '';
+ top3.forEach((t, i) => {
+   if (!t) return;
+   const color = stats[t]?.color || TEAM_COLORS[0];
+   const div = document.createElement('div');
+   div.className = 'podium-place';
+   div.innerHTML = `<div class="podium-name" style="color:${color}">${t}</div><div class="podium-block ${classes[i]}" style="height:${heights[i]}">${labels[i]}</div>`;
+   podium.appendChild(div);
+ });
+
+ // Full list below podium
+ if (fullRanking.length > 3) {
+   const list = document.createElement('div');
+   list.style.cssText = 'margin-top:1.5rem;text-align:left';
+   fullRanking.forEach((t, i) => {
+     const color = stats[t]?.color || TEAM_COLORS[0];
+     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+     const row = document.createElement('div');
+     row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;font-size:0.82rem';
+     row.innerHTML = `<span style="min-width:2rem;text-align:center">${medal}</span><span class="badge-dot" style="background:${color}"></span><span>${t}</span>`;
+     list.appendChild(row);
+   });
+   podium.appendChild(list);
+ }
+
  fin.scrollIntoView({ behavior: 'smooth' });
  spawnConfetti();
 }
