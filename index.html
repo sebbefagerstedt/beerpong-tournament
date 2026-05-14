@@ -683,6 +683,22 @@ function timerBarColor(m) {
  return 'var(--amber)';
 }
 
+function endMatchByTime(matchId) {
+ const m = matches[matchId];
+ if (m.done || m.cupsA === m.cupsB) return;
+ m.winner = m.cupsA > m.cupsB ? m.a : m.b;
+ m.done = true;
+ m.timerRunning = false;
+ clearInterval(timerIntervals[matchId]);
+ delete timerIntervals[matchId];
+ applyStats(m);
+ renderMatchCard(matchId);
+ renderStandings();
+ updateTopProgress();
+ checkFinished();
+ saveState();
+}
+
 function renderMatches() {
  const grid = document.getElementById('matches-grid');
  grid.innerHTML = '';
@@ -729,6 +745,7 @@ function renderMatchCard(matchId) {
  ${m.timerRunning ? '⏸ PAUSA' : '▶ FORTSÄTT'}
  </button>
  <button class="btn sm muted" onclick="resetMatchTimer(${m.id})" title="Återställ timer">↺</button>
+ ${isOvertime(m) && m.cupsA !== m.cupsB ? `<button class="btn sm danger" onclick="endMatchByTime(${m.id})">⏱ AVSLUTA MATCH</button>` : ''}
  ` : ''}
  </div>
  </div>`;
@@ -786,6 +803,7 @@ function renderMatchCard(matchId) {
 
 function renderMatchTimerStrip(matchId) {
  const m = matches[matchId];
+ if (!m.overtime && isOvertime(m)) { m.overtime = true; renderMatchCard(matchId); return; }
  const disp = document.getElementById(`tdisp-${matchId}`);
  const bar = document.getElementById(`tbar-${matchId}`);
  if (!disp) return;
