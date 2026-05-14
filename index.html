@@ -310,6 +310,41 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 .spectator-mode #fab-reset,
 .spectator-mode #fab-inline-reset { pointer-events: none; opacity: 0.4; }
 .spectator-mode .cup { cursor: default; }
+
+/* Playoff */
+#playoff-section { display: none; }
+#playoff-section.visible { display: block; }
+.playoff-bracket { display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem 0; align-items: center; }
+.playoff-round { display: flex; flex-direction: column; gap: 1rem; min-width: 200px; }
+.playoff-round-title { font-family: 'Bebas Neue', cursive; font-size: 1.1rem; color: var(--amber); text-align: center; margin-bottom: 0.5rem; letter-spacing: 0.08em; }
+.playoff-match { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.6rem 0.8rem; }
+.playoff-match.active { border-color: var(--green); box-shadow: 0 0 12px rgba(57,211,83,0.12); }
+.playoff-match.done { border-color: #1e3a1e; }
+.playoff-match-team { display: flex; align-items: center; justify-content: space-between; padding: 0.25rem 0; gap: 0.5rem; font-size: 0.8rem; }
+.playoff-match-team .badge-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.playoff-match-team.winner { color: var(--green); font-weight: 500; }
+.playoff-match-team.tbd { color: var(--muted); font-style: italic; }
+.playoff-connector { width: 1.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+#playoff-modal {
+ position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+ display: flex; align-items: center; justify-content: center;
+ z-index: 1100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+#playoff-modal.visible { opacity: 1; pointer-events: all; }
+#playoff-modal-box {
+ background: var(--card); border: 1px solid var(--amber);
+ border-radius: 6px; padding: 2rem; max-width: 420px; width: 90%;
+ max-height: 80vh; overflow-y: auto;
+}
+#playoff-modal-box h3 { font-family: 'Bebas Neue', cursive; font-size: 1.7rem; color: var(--amber); margin-bottom: 1rem; }
+.playoff-format-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.playoff-format-btns .btn.active { background: var(--amber); color: #000; }
+.playoff-team-list { display: grid; gap: 0.4rem; margin-bottom: 1.2rem; }
+.playoff-team-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-size: 0.8rem; transition: border-color 0.15s; }
+.playoff-team-item:hover { border-color: var(--amber); }
+.playoff-team-item.selected { border-color: var(--green); background: rgba(57,211,83,0.08); }
+.playoff-team-item .badge-dot { width: 8px; height: 8px; border-radius: 50%; }
 </style>
 </head>
 <body>
@@ -360,6 +395,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  <div class="team-inputs" id="team-inputs"></div>
  <div class="flex-row">
  <button class="btn success" onclick="startTournament()">STARTA TURNERING</button>
+ <button class="btn" onclick="startPlayoffStandalone()">🏆 STARTA SLUTSPEL</button>
  <span style="font-size:0.72rem;color:var(--muted)" id="match-count-label">10 matcher · round-robin</span>
  </div>
  </div>
@@ -379,11 +415,19 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  </thead>
  <tbody id="standings-body"></tbody>
  </table>
+ <div style="margin-top:1.2rem">
+ <button class="btn" onclick="openPlayoffModal()">🏆 STARTA SLUTSPEL</button>
+ </div>
  </div>
 
  <div class="section-card animate-in" id="matches-section" style="display:none">
  <h2>🎯 Matcher</h2>
  <div id="matches-grid"></div>
+ </div>
+
+ <div class="section-card animate-in" id="playoff-section">
+ <h2>🏆 Slutspel</h2>
+ <div class="playoff-bracket" id="playoff-bracket"></div>
  </div>
 
  <div class="section-card animate-in" id="final-section">
@@ -430,6 +474,19 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  <div class="flex-row">
  <button class="btn danger" onclick="doReset()">JA, ÅTERSTÄLL</button>
  <button class="btn muted" onclick="closeModal()">AVBRYT</button>
+ </div>
+ </div>
+</div>
+
+<div id="playoff-modal">
+ <div id="playoff-modal-box">
+ <h3>🏆 Starta slutspel</h3>
+ <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format och vilka lag som ska vara med</p>
+ <div class="playoff-format-btns" id="playoff-format-btns"></div>
+ <div class="playoff-team-list" id="playoff-team-list"></div>
+ <div class="flex-row" style="justify-content:center;gap:0.75rem">
+ <button class="btn success" id="btn-confirm-playoff" onclick="confirmPlayoff()">STARTA</button>
+ <button class="btn muted" onclick="closePlayoffModal()">AVBRYT</button>
  </div>
  </div>
 </div>
@@ -1012,6 +1069,372 @@ if (loadState()) {
  initTeamInputs();
  updateMatchCount();
 }
+
+// ===== PLAYOFF / SLUTSPEL =====
+const PLAYOFF_FORMATS = [
+ { name: 'Final', teams: 2 },
+ { name: 'Semifinal', teams: 4 },
+ { name: 'Kvartsfinal', teams: 8 },
+ { name: 'Åttondelsfinal', teams: 16 },
+];
+
+const ROUND_NAMES = { 16: 'Åttondel', 8: 'Kvart', 4: 'Semi', 2: 'Final' };
+
+let playoffRounds = [];
+let playoffActive = false;
+let playoffSelectedFormat = null;
+let playoffSelectedTeams = [];
+
+function getAutoFormat(teamCount) {
+ if (teamCount <= 2) return 2;
+ if (teamCount <= 4) return 4;
+ if (teamCount <= 8) return 8;
+ return 16;
+}
+
+function startPlayoffStandalone() {
+ const teamNames = getTeamNames();
+ const formatSize = getAutoFormat(numTeams);
+ const playoffTeams = teamNames.slice(0, formatSize);
+ // Ensure stats exist for all teams
+ playoffTeams.forEach((t, i) => {
+   if (!stats[t]) stats[t] = { wins:0, losses:0, played:0, cupsFor:0, points:0, color: TEAM_COLORS[i % TEAM_COLORS.length] };
+ });
+ teams = playoffTeams;
+ initPlayoff(playoffTeams, formatSize);
+}
+
+function openPlayoffModal() {
+ const modal = document.getElementById('playoff-modal');
+ modal.classList.add('visible');
+ playoffSelectedTeams = [];
+
+ // Render format buttons
+ const btnContainer = document.getElementById('playoff-format-btns');
+ btnContainer.innerHTML = '';
+ PLAYOFF_FORMATS.forEach(f => {
+   if (f.teams > teams.length) return;
+   const btn = document.createElement('button');
+   btn.className = 'btn sm' + (playoffSelectedFormat === f.teams ? ' active' : '');
+   btn.textContent = `${f.name} (${f.teams})`;
+   btn.onclick = () => selectPlayoffFormat(f.teams);
+   btnContainer.appendChild(btn);
+ });
+ // Default to smallest format
+ if (!playoffSelectedFormat || playoffSelectedFormat > teams.length) {
+   selectPlayoffFormat(PLAYOFF_FORMATS.find(f => f.teams <= teams.length)?.teams || 2);
+ } else {
+   selectPlayoffFormat(playoffSelectedFormat);
+ }
+
+ // Render team list sorted by standings
+ renderPlayoffTeamList();
+}
+
+function selectPlayoffFormat(size) {
+ playoffSelectedFormat = size;
+ document.querySelectorAll('#playoff-format-btns .btn').forEach(b => {
+   b.classList.toggle('active', b.textContent.includes(`(${size})`));
+ });
+ updatePlayoffConfirmBtn();
+}
+
+function renderPlayoffTeamList() {
+ const sorted = [...teams].sort((a, b) => {
+   const sa = stats[a], sb = stats[b];
+   return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
+ });
+ const container = document.getElementById('playoff-team-list');
+ container.innerHTML = '';
+ sorted.forEach((t, i) => {
+   const div = document.createElement('div');
+   div.className = 'playoff-team-item' + (playoffSelectedTeams.includes(t) ? ' selected' : '');
+   div.innerHTML = `<span class="badge-dot" style="background:${stats[t].color}"></span><span>${i+1}. ${t}</span><span style="color:var(--muted);font-size:0.7rem;margin-left:auto">${stats[t].points}p</span>`;
+   div.onclick = () => togglePlayoffTeam(t);
+   container.appendChild(div);
+ });
+}
+
+function togglePlayoffTeam(t) {
+ const idx = playoffSelectedTeams.indexOf(t);
+ if (idx >= 0) playoffSelectedTeams.splice(idx, 1);
+ else playoffSelectedTeams.push(t);
+ renderPlayoffTeamList();
+ updatePlayoffConfirmBtn();
+}
+
+function updatePlayoffConfirmBtn() {
+ const btn = document.getElementById('btn-confirm-playoff');
+ const needed = playoffSelectedFormat || 2;
+ btn.disabled = playoffSelectedTeams.length !== needed;
+ btn.textContent = `STARTA (${playoffSelectedTeams.length}/${needed})`;
+}
+
+function closePlayoffModal() {
+ document.getElementById('playoff-modal').classList.remove('visible');
+ // Restore original modal content for next use
+ const box = document.getElementById('playoff-modal-box');
+ if (!box.querySelector('#playoff-format-btns')) {
+   box.innerHTML = `
+     <h3>🏆 Starta slutspel</h3>
+     <p style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem">Välj format och vilka lag som ska vara med</p>
+     <div class="playoff-format-btns" id="playoff-format-btns"></div>
+     <div class="playoff-team-list" id="playoff-team-list"></div>
+     <div class="flex-row" style="justify-content:center;gap:0.75rem">
+       <button class="btn success" id="btn-confirm-playoff" onclick="confirmPlayoff()">STARTA</button>
+       <button class="btn muted" onclick="closePlayoffModal()">AVBRYT</button>
+     </div>`;
+ }
+}
+
+document.getElementById('playoff-modal').addEventListener('click', function(e) {
+ if (e.target === this) closePlayoffModal();
+});
+
+function confirmPlayoff() {
+ const playoffTeams = [...playoffSelectedTeams];
+ closePlayoffModal();
+ initPlayoff(playoffTeams, playoffSelectedFormat);
+}
+
+function initPlayoff(playoffTeams, formatSize) {
+ playoffRounds = [];
+ playoffActive = true;
+
+ // Shuffle/seed: first team vs last, etc.
+ const seeded = [];
+ for (let i = 0; i < playoffTeams.length / 2; i++) {
+   seeded.push(playoffTeams[i]);
+   seeded.push(playoffTeams[playoffTeams.length - 1 - i]);
+ }
+
+ // Build rounds
+ let currentSize = formatSize;
+ let matchId = 0;
+ while (currentSize >= 2) {
+   const round = { name: ROUND_NAMES[currentSize] || `Runda ${currentSize}`, matches: [] };
+   const numMatches = currentSize / 2;
+   for (let i = 0; i < numMatches; i++) {
+     const m = {
+       id: matchId++,
+       a: currentSize === formatSize ? seeded[i * 2] || null : null,
+       b: currentSize === formatSize ? seeded[i * 2 + 1] || null : null,
+       cupsA: 0, cupsB: 0, done: false, winner: null,
+       durationMinutes: defaultMinutes,
+       timerStartedAt: null, pausedSecondsLeft: defaultMinutes * 60,
+       timerRunning: false, timerStarted: false, overtime: false,
+     };
+     round.matches.push(m);
+   }
+   playoffRounds.push(round);
+   currentSize = currentSize / 2;
+ }
+
+ // Show playoff UI
+ document.getElementById('setup-section').style.display = 'none';
+ document.getElementById('playoff-section').classList.add('visible');
+ document.getElementById('fab-reset').style.display = 'block';
+ document.getElementById('fab-inline-reset').style.display = 'inline-block';
+ if (!tournamentStarted) {
+   document.getElementById('header-sub').textContent = `Slutspel · ${ROUND_NAMES[formatSize]} · ${cupsToWin} muggar`;
+ }
+ renderPlayoffBracket();
+ saveState();
+ document.getElementById('playoff-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderPlayoffBracket() {
+ const container = document.getElementById('playoff-bracket');
+ container.innerHTML = '';
+
+ playoffRounds.forEach((round, ri) => {
+   const roundDiv = document.createElement('div');
+   roundDiv.className = 'playoff-round';
+   roundDiv.innerHTML = `<div class="playoff-round-title">${round.name}</div>`;
+
+   round.matches.forEach((m, mi) => {
+     const isActive = m.a && m.b && !m.done;
+     const matchDiv = document.createElement('div');
+     matchDiv.className = `playoff-match${m.done ? ' done' : isActive ? ' active' : ''}`;
+     matchDiv.id = `pm-${ri}-${mi}`;
+
+     const teamHtml = (name, cups, isWinner) => {
+       if (!name) return `<div class="playoff-match-team tbd"><span>TBD</span></div>`;
+       const color = stats[name]?.color || TEAM_COLORS[0];
+       return `<div class="playoff-match-team${isWinner ? ' winner' : ''}"><span class="badge-dot" style="background:${color}"></span><span>${name}</span><span>${cups}</span></div>`;
+     };
+
+     matchDiv.innerHTML = teamHtml(m.a, m.cupsA, m.winner === m.a) + teamHtml(m.b, m.cupsB, m.winner === m.b);
+
+     if (isActive) {
+       const btnRow = document.createElement('div');
+       btnRow.style.cssText = 'margin-top:0.4rem;text-align:center';
+       btnRow.innerHTML = `<button class="btn sm success" onclick="openPlayoffMatch(${ri},${mi})">SPELA</button>`;
+       matchDiv.appendChild(btnRow);
+     }
+     roundDiv.appendChild(matchDiv);
+   });
+
+   container.appendChild(roundDiv);
+ });
+}
+
+function openPlayoffMatch(roundIdx, matchIdx) {
+ const m = playoffRounds[roundIdx].matches[matchIdx];
+ if (!m.a || !m.b || m.done) return;
+
+ // Create a temporary match in the main matches array for reuse of match card UI
+ const tempMatch = {
+   ...m, id: 9000 + roundIdx * 100 + matchIdx,
+   _playoffRound: roundIdx, _playoffMatch: matchIdx
+ };
+
+ // Show a simple scoring modal
+ showPlayoffScoringModal(roundIdx, matchIdx);
+}
+
+function showPlayoffScoringModal(roundIdx, matchIdx) {
+ const m = playoffRounds[roundIdx].matches[matchIdx];
+ const aColor = stats[m.a]?.color || TEAM_COLORS[0];
+ const bColor = stats[m.b]?.color || TEAM_COLORS[1];
+
+ const modal = document.getElementById('playoff-modal');
+ const box = document.getElementById('playoff-modal-box');
+ box.innerHTML = `
+   <h3>${playoffRounds[roundIdx].name}</h3>
+   <div class="match-body" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.8rem;padding:1rem 0">
+     <div class="match-team">
+       <div class="match-team-name"><div class="badge-dot" style="background:${aColor}"></div><span>${m.a}</span></div>
+       <div class="cup-selector" id="po-cups-a"></div>
+     </div>
+     <div class="match-vs">VS</div>
+     <div class="match-team right">
+       <div class="match-team-name"><div class="badge-dot" style="background:${bColor}"></div><span>${m.b}</span></div>
+       <div class="cup-selector" id="po-cups-b"></div>
+     </div>
+   </div>
+   <div style="text-align:center;margin-top:1rem">
+     <button class="btn muted" onclick="closePlayoffModal()">STÄNG</button>
+   </div>
+ `;
+
+ function renderCups() {
+   const cupsA = document.getElementById('po-cups-a');
+   const cupsB = document.getElementById('po-cups-b');
+   if (!cupsA || !cupsB) return;
+   cupsA.innerHTML = ''; cupsB.innerHTML = '';
+   for (let i = 1; i <= cupsToWin; i++) {
+     const hitA = i <= m.cupsA;
+     const btnA = document.createElement('button');
+     btnA.className = 'cup' + (hitA ? ' hit' : '');
+     if (hitA) btnA.style.cssText = `background:${aColor};border-color:${aColor}`;
+     btnA.onclick = () => { m.cupsA = m.cupsA === i ? i - 1 : i; checkPlayoffWin(); renderCups(); };
+     cupsA.appendChild(btnA);
+
+     const hitB = i <= m.cupsB;
+     const btnB = document.createElement('button');
+     btnB.className = 'cup' + (hitB ? ' hit' : '');
+     if (hitB) btnB.style.cssText = `background:${bColor};border-color:${bColor}`;
+     btnB.onclick = () => { m.cupsB = m.cupsB === i ? i - 1 : i; checkPlayoffWin(); renderCups(); };
+     cupsB.appendChild(btnB);
+   }
+ }
+
+ function checkPlayoffWin() {
+   if (m.cupsA >= cupsToWin) { m.cupsA = cupsToWin; finishPlayoffMatch(roundIdx, matchIdx, m.a); }
+   else if (m.cupsB >= cupsToWin) { m.cupsB = cupsToWin; finishPlayoffMatch(roundIdx, matchIdx, m.b); }
+ }
+
+ renderCups();
+ modal.classList.add('visible');
+}
+
+function finishPlayoffMatch(roundIdx, matchIdx, winner) {
+ const m = playoffRounds[roundIdx].matches[matchIdx];
+ m.done = true;
+ m.winner = winner;
+
+ // Advance winner to next round
+ if (roundIdx + 1 < playoffRounds.length) {
+   const nextRound = playoffRounds[roundIdx + 1];
+   const nextMatchIdx = Math.floor(matchIdx / 2);
+   const nextMatch = nextRound.matches[nextMatchIdx];
+   if (matchIdx % 2 === 0) nextMatch.a = winner;
+   else nextMatch.b = winner;
+ }
+
+ closePlayoffModal();
+ renderPlayoffBracket();
+ saveState();
+
+ // Check if playoff is complete
+ const finalMatch = playoffRounds[playoffRounds.length - 1].matches[0];
+ if (finalMatch.done) {
+   setTimeout(() => showPlayoffWinner(finalMatch.winner), 400);
+ }
+}
+
+function showPlayoffWinner(winner) {
+ const fin = document.getElementById('final-section');
+ fin.classList.add('visible');
+ const podium = document.getElementById('podium');
+ const color = stats[winner]?.color || TEAM_COLORS[0];
+ podium.innerHTML = `<div class="podium-place"><div class="podium-name" style="color:${color}">${winner}</div><div class="podium-block p1">🥇</div></div>`;
+ fin.scrollIntoView({ behavior: 'smooth' });
+ spawnConfetti();
+}
+
+// Override saveState to include playoff data
+const _origSaveState2 = saveState;
+saveState = function() {
+ if (playoffActive && !tournamentStarted) {
+   // Standalone playoff - save directly
+   localStorage.setItem(STORAGE_KEY, JSON.stringify({
+     numTeams, cupsToWin, defaultMinutes, teams, matches: [], stats, tournamentStarted: false,
+     playoffRounds, playoffActive: true
+   }));
+ } else {
+   _origSaveState2();
+   if (playoffActive) {
+     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+     existing.playoffRounds = playoffRounds;
+     existing.playoffActive = true;
+     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+   }
+ }
+};
+
+// Override loadState to restore playoff
+(function() {
+ const raw = localStorage.getItem(STORAGE_KEY);
+ if (!raw) return;
+ try {
+   const s = JSON.parse(raw);
+   if (s.playoffActive && s.playoffRounds) {
+     playoffRounds = s.playoffRounds;
+     playoffActive = true;
+     if (s.stats) stats = s.stats;
+     if (s.teams) teams = s.teams;
+     if (s.cupsToWin) cupsToWin = s.cupsToWin;
+     if (!s.tournamentStarted) document.getElementById('setup-section').style.display = 'none';
+     document.getElementById('playoff-section').classList.add('visible');
+     document.getElementById('fab-reset').style.display = 'block';
+     document.getElementById('fab-inline-reset').style.display = 'inline-block';
+     renderPlayoffBracket();
+     const finalMatch = playoffRounds[playoffRounds.length - 1]?.matches[0];
+     if (finalMatch?.done) showPlayoffWinner(finalMatch.winner);
+   }
+ } catch(e) {}
+})();
+
+// Patch doReset to clear playoff
+const _origDoReset = doReset;
+doReset = function() {
+ playoffRounds = [];
+ playoffActive = false;
+ document.getElementById('playoff-section').classList.remove('visible');
+ _origDoReset();
+};
 </script>
 
 <script type="module">
