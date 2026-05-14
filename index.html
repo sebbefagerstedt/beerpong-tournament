@@ -1780,7 +1780,7 @@ function showVictoryReact() {
  bubble.textContent = ['VINNARE!','LEGEND!','GG!','SKÖÖÖNT!'][Math.floor(Math.random()*4)];
  el.classList.add('visible');
  clearTimeout(reactTimeout);
- const duration = victoryVideoSrc ? 1500 : 3500;
+ const duration = victoryVideoSrc ? 3500 : 3500;
  reactTimeout = setTimeout(() => { el.classList.remove('visible'); videoEl.pause(); videoEl.style.display = 'none'; }, duration);
 }
 
