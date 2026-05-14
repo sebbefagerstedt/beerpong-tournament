@@ -1714,15 +1714,17 @@ function spawnArvidConfetti() {
 
 // 4. Arvid Reacts – vid vinst, halvtid, 1 min kvar
 const REACTIONS = {
- happy: { img: 'images/reactions/happy.png', fallback: '🍻', texts: ['HALVTID!','Gransen!','Vilken match!'] },
- shocked: { img: 'images/reactions/shocked.png', fallback: '😱', texts: ['1 MINUT KVAR! ⏰','Stressa på!','Tick tock!'] },
- party: { img: 'images/reactions/party.png', fallback: '🎉', texts: ['PARTY!','VINNARE!','LEGEND!'] }
+ happy: { base: 'images/reactions/happy', fallback: '🍻', texts: ['HALVTID!','Gransen!','Vilken match!'] },
+ shocked: { base: 'images/reactions/shocked', fallback: '😱', texts: ['1 MINUT KVAR! ⏰','Stressa på!','Tick tock!'] },
+ party: { base: 'images/reactions/party', fallback: '🎉', texts: ['PARTY!','VINNARE!','LEGEND!'] }
 };
 const reactionLoaded = {};
 Object.entries(REACTIONS).forEach(([key, r]) => {
- const img = new Image();
- img.onload = () => { reactionLoaded[key] = true; };
- img.src = r.img;
+ ['.png','.jpg'].some(ext => {
+   const img = new Image();
+   img.onload = () => { reactionLoaded[key] = true; r.img = r.base + ext; };
+   img.src = r.base + ext;
+ });
 });
 
 let reactTimeout = null;
