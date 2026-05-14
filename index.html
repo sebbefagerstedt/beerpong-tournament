@@ -391,6 +391,14 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  <button onclick="changeTime(1)">+</button>
  </div>
  </div>
+ <div class="control-group">
+ <label>Antal grupper</label>
+ <div class="stepper">
+ <button onclick="changeGroups(-1)">−</button>
+ <span id="groups-display">1</span>
+ <button onclick="changeGroups(1)">+</button>
+ </div>
+ </div>
  </div>
  <div class="team-inputs" id="team-inputs"></div>
  <div class="flex-row">
@@ -503,9 +511,11 @@ const TEAM_COLORS = [
 let numTeams = 5;
 let cupsToWin = 3;
 let defaultMinutes = 10;
+let numGroups = 1;
 
 let teams = [];
 let matches = [];
+let groups = []; // array of { name, teams: [] }
 let stats = {};
 let tournamentStarted = false;
 
@@ -518,7 +528,7 @@ const STORAGE_KEY = 'beerpong_state';
 function saveState() {
  if (!tournamentStarted) { localStorage.removeItem(STORAGE_KEY); return; }
  localStorage.setItem(STORAGE_KEY, JSON.stringify({
- numTeams, cupsToWin, defaultMinutes, teams, matches: matches.map(m => ({...m, timerRunning: false})), stats, tournamentStarted
+ numTeams, cupsToWin, defaultMinutes, numGroups, groups, teams, matches: matches.map(m => ({...m, timerRunning: false})), stats, tournamentStarted
  }));
 }
 
@@ -528,6 +538,7 @@ function loadState() {
  try {
  const s = JSON.parse(raw);
  numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
+ numGroups = s.numGroups || 1; groups = s.groups || [];
  teams = s.teams; matches = s.matches; stats = s.stats; tournamentStarted = s.tournamentStarted;
  return tournamentStarted;
  } catch(e) { return false; }
@@ -550,9 +561,27 @@ function changeTime(d) {
  document.getElementById('time-display').textContent = defaultMinutes;
 }
 
+function changeGroups(d) {
+ numGroups = Math.max(1, Math.min(4, numGroups + d));
+ document.getElementById('groups-display').textContent = numGroups;
+ updateMatchCount();
+}
+
 function updateMatchCount() {
- const c = (numTeams * (numTeams - 1)) / 2;
+ let c;
+ if (numGroups <= 1) {
+ c = (numTeams * (numTeams - 1)) / 2;
  document.getElementById('match-count-label').textContent = `${c} matcher · round-robin`;
+ } else {
+ c = 0;
+ const base = Math.floor(numTeams / numGroups);
+ const extra = numTeams % numGroups;
+ for (let g = 0; g < numGroups; g++) {
+ const size = base + (g < extra ? 1 : 0);
+ c += (size * (size - 1)) / 2;
+ }
+ document.getElementById('match-count-label').textContent = `${c} matcher · ${numGroups} grupper`;
+ }
 }
 
 function initTeamInputs() {
@@ -582,18 +611,32 @@ function getTeamNames() {
 }
 
 function startTournament() {
- teams = getTeamNames(); stats = {}; matches = [];
+ teams = getTeamNames(); stats = {}; matches = []; groups = [];
 
  teams.forEach((t, i) => {
  stats[t] = { wins:0, losses:0, played:0, cupsFor:0, points:0, color: TEAM_COLORS[i % TEAM_COLORS.length] };
  });
 
+ // Divide teams into groups
+ if (numGroups <= 1) {
+ groups = [{ name: null, teams: [...teams] }];
+ } else {
+ const groupNames = ['A','B','C','D'];
+ for (let g = 0; g < numGroups; g++) groups.push({ name: `Grupp ${groupNames[g]}`, teams: [] });
+ teams.forEach((t, i) => groups[i % numGroups].teams.push(t));
+ }
+
+ // Assign group to each team in stats
+ groups.forEach(g => g.teams.forEach(t => { stats[t].group = g.name; }));
+
  let id = 0;
- for (let i = 0; i < teams.length; i++)
- for (let j = i+1; j < teams.length; j++)
+ groups.forEach(g => {
+ for (let i = 0; i < g.teams.length; i++)
+ for (let j = i+1; j < g.teams.length; j++)
  matches.push({
  id: id++,
- a: teams[i], b: teams[j],
+ a: g.teams[i], b: g.teams[j],
+ group: g.name,
  cupsA: 0, cupsB: 0,
  done: false, winner: null,
  durationMinutes: defaultMinutes,
@@ -602,6 +645,7 @@ function startTournament() {
  timerRunning: false,
  timerStarted: false,
  overtime: false,
+ });
  });
 
  // Shuffle match order
@@ -618,7 +662,7 @@ function startTournament() {
  document.getElementById('fab-reset').style.display = 'block';
  document.getElementById('fab-inline-reset').style.display = 'inline-block';
  document.getElementById('header-sub').textContent =
- `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match` + (numGroups > 1 ? ` · ${numGroups} grupper` : '');
 
  tournamentStarted = true;
  renderMatches();
@@ -930,24 +974,28 @@ function applyStats(m) {
 }
 
 function renderStandings() {
+ const section = document.getElementById('standings-section');
+ const body = document.getElementById('standings-body');
+ const rankClass = ['gold','silver','bronze'];
+
+ if (numGroups <= 1) {
+ // Single table
+ document.getElementById('standings-table').style.display = '';
+ // Remove any group tables
+ section.querySelectorAll('.group-standings').forEach(el => el.remove());
+
  const sorted = [...teams].sort((a, b) => {
  const sa = stats[a], sb = stats[b];
  return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
  });
 
  const newLeader = sorted[0];
- const section = document.getElementById('standings-section');
  if (prevLeader && newLeader !== prevLeader && matches.some(m => m.done)) {
- section.classList.remove('shake');
- void section.offsetWidth;
- section.classList.add('shake');
+ section.classList.remove('shake'); void section.offsetWidth; section.classList.add('shake');
  }
  prevLeader = newLeader;
 
- const body = document.getElementById('standings-body');
  body.innerHTML = '';
- const rankClass = ['gold','silver','bronze'];
-
  sorted.forEach((t, i) => {
  const s = stats[t];
  const tr = document.createElement('tr');
@@ -960,6 +1008,48 @@ function renderStandings() {
  <td class="stat-cell stat-highlight">${s.points}</td>`;
  body.appendChild(tr);
  });
+ } else {
+ // Per-group tables
+ document.getElementById('standings-table').style.display = 'none';
+ section.querySelectorAll('.group-standings').forEach(el => el.remove());
+
+ groups.forEach(g => {
+ const sorted = [...g.teams].sort((a, b) => {
+ const sa = stats[a], sb = stats[b];
+ return sb.points !== sa.points ? sb.points - sa.points : sb.cupsFor - sa.cupsFor;
+ });
+
+ const wrap = document.createElement('div');
+ wrap.className = 'group-standings';
+ wrap.style.marginBottom = '1.5rem';
+ wrap.innerHTML = `<h3 style="font-family:'Bebas Neue',cursive;font-size:1.3rem;color:var(--amber);margin-bottom:0.6rem">${g.name}</h3>
+ <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+ <thead><tr>
+ <th style="width:36px;text-align:left;color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">#</th>
+ <th style="text-align:left;color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">Lag</th>
+ <th class="stat-cell" style="color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">M</th>
+ <th class="stat-cell" style="color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">V</th>
+ <th class="stat-cell" style="color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">Muggar</th>
+ <th class="stat-cell" style="color:var(--muted);font-weight:500;letter-spacing:0.15em;text-transform:uppercase;font-size:0.67rem;padding:0.45rem 0.7rem;border-bottom:1px solid var(--border)">Poäng</th>
+ </tr></thead><tbody></tbody></table>`;
+ const tbody = wrap.querySelector('tbody');
+ sorted.forEach((t, i) => {
+ const s = stats[t];
+ const tr = document.createElement('tr');
+ tr.innerHTML = `
+ <td class="rank-num ${rankClass[i]||''}" style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c">${i+1}</td>
+ <td style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c"><span class="team-badge"><span class="badge-dot" style="background:${s.color}"></span>${t}</span></td>
+ <td class="stat-cell" style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c">${s.played}</td>
+ <td class="stat-cell ${s.wins>0?'stat-highlight':''}" style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c">${s.wins}</td>
+ <td class="stat-cell" style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c">${s.cupsFor}</td>
+ <td class="stat-cell stat-highlight" style="padding:0.6rem 0.7rem;border-bottom:1px solid #1c1c1c">${s.points}</td>`;
+ tbody.appendChild(tr);
+ });
+ // Insert before the playoff button
+ const playoffBtn = section.querySelector('div[style*="margin-top"]');
+ section.insertBefore(wrap, playoffBtn);
+ });
+ }
 }
 
 function checkFinished() {
@@ -1060,7 +1150,7 @@ if (loadState()) {
  document.getElementById('fab-reset').style.display = 'block';
  document.getElementById('fab-inline-reset').style.display = 'inline-block';
  document.getElementById('header-sub').textContent =
- `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match` + (numGroups > 1 ? ` · ${numGroups} grupper` : '');
  renderMatches();
  renderStandings();
  updateTopProgress();
@@ -1523,7 +1613,7 @@ function applySpectatorMode() {
 }
 
 function getStateSnapshot() {
- return { numTeams, cupsToWin, defaultMinutes, teams,
+ return { numTeams, cupsToWin, defaultMinutes, numGroups, groups, teams,
    matches: matches.map(m => ({ ...m })),
    stats, tournamentStarted };
 }
@@ -1554,6 +1644,7 @@ function onRemoteState(snapshot) {
    return;
  }
  numTeams = s.numTeams; cupsToWin = s.cupsToWin; defaultMinutes = s.defaultMinutes;
+ numGroups = s.numGroups || 1; groups = s.groups || [];
  teams = s.teams; stats = s.stats; tournamentStarted = s.tournamentStarted;
 
  matches = s.matches;
@@ -1573,7 +1664,7 @@ function onRemoteState(snapshot) {
  document.getElementById('matches-section').style.display = 'block';
  document.getElementById('fab-reset').style.display = isSpectator ? 'none' : 'block';
  document.getElementById('fab-inline-reset').style.display = isSpectator ? 'none' : 'inline-block';
- document.getElementById('header-sub').textContent = `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match`;
+ document.getElementById('header-sub').textContent = `${numTeams} lag · ${cupsToWin} muggar · ${defaultMinutes} min/match` + (numGroups > 1 ? ` · ${numGroups} grupper` : '');
 
  const grid = document.getElementById('matches-grid');
  if (grid.children.length === matches.length) {
