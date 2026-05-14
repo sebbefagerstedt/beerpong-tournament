@@ -401,6 +401,10 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  padding: 0.5rem 0.8rem; font-size: 0.75rem; max-width: 160px;
  color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
+#arvid-react video {
+ width: 200px; border-radius: 8px; display: none;
+ border: 2px solid var(--amber); box-shadow: 0 4px 20px rgba(245,166,35,0.3);
+}
 </style>
 </head>
 <body>
@@ -555,7 +559,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 </div>
 
 <div class="confetti-wrap" id="confetti-wrap"></div>
-<div id="arvid-react"><img src="" alt="Arvid"><span class="react-emoji"></span><div class="react-bubble"></div></div>
+<div id="arvid-react"><img src="" alt="Arvid"><video id="arvid-react-video" muted playsinline></video><span class="react-emoji"></span><div class="react-bubble"></div></div>
 
 <script>
 const TEAM_COLORS = [
@@ -854,6 +858,8 @@ function endMatchByTime(matchId) {
  updateTopProgress();
  checkFinished();
  saveState();
+ spawnArvidConfetti();
+ showVictoryReact();
 }
 
 function renderMatches() {
@@ -1512,6 +1518,7 @@ function finishPlayoffMatch(roundIdx, matchIdx, winner) {
  renderPlayoffBracket();
  saveState();
  spawnArvidConfetti();
+ showVictoryReact();
 
  // Check if playoff is complete
  const finalMatch = playoffRounds[playoffRounds.length - 1].matches[0];
@@ -1733,6 +1740,8 @@ function showArvidReact(type) {
  const r = REACTIONS[type];
  const imgEl = el.querySelector('img');
  const emojiEl = el.querySelector('.react-emoji');
+ const videoEl = document.getElementById('arvid-react-video');
+ videoEl.style.display = 'none'; videoEl.pause();
  if (reactionLoaded[type]) {
    imgEl.src = r.img; imgEl.style.display = ''; emojiEl.style.display = 'none';
  } else {
@@ -1744,6 +1753,37 @@ function showArvidReact(type) {
  reactTimeout = setTimeout(() => el.classList.remove('visible'), 3500);
 }
 
+// Victory video reaction
+const VICTORY_VIDEO_SRCS = ['images/reactions/victory.mp4', 'images/reactions/victory.webm'];
+let victoryVideoSrc = null;
+VICTORY_VIDEO_SRCS.forEach(src => {
+ const v = document.createElement('video');
+ v.onloadeddata = () => { if (!victoryVideoSrc) victoryVideoSrc = src; };
+ v.src = src;
+});
+
+function showVictoryReact() {
+ const el = document.getElementById('arvid-react');
+ const imgEl = el.querySelector('img');
+ const emojiEl = el.querySelector('.react-emoji');
+ const videoEl = document.getElementById('arvid-react-video');
+ const bubble = el.querySelector('.react-bubble');
+ imgEl.style.display = 'none'; emojiEl.style.display = 'none';
+ if (victoryVideoSrc) {
+   videoEl.src = victoryVideoSrc;
+   videoEl.style.display = 'block';
+   videoEl.currentTime = 0;
+   videoEl.play();
+ } else {
+   emojiEl.textContent = '🏆'; emojiEl.style.display = '';
+ }
+ bubble.textContent = ['VINNARE!','LEGEND!','GG!','SKÖÖÖNT!'][Math.floor(Math.random()*4)];
+ el.classList.add('visible');
+ clearTimeout(reactTimeout);
+ const duration = victoryVideoSrc ? 6000 : 3500;
+ reactTimeout = setTimeout(() => { el.classList.remove('visible'); videoEl.pause(); videoEl.style.display = 'none'; }, duration);
+}
+
 // React on match win + confetti
 const _reactSetCups = setCups;
 setCups = function(matchId, side, cups) {
@@ -1752,6 +1792,7 @@ setCups = function(matchId, side, cups) {
  _reactSetCups(matchId, side, cups);
  if (m.done && !wasDone) {
    spawnArvidConfetti();
+   showVictoryReact();
  }
 };
 
