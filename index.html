@@ -1511,6 +1511,7 @@ function finishPlayoffMatch(roundIdx, matchIdx, winner) {
  closePlayoffModal();
  renderPlayoffBracket();
  saveState();
+ spawnArvidConfetti();
 
  // Check if playoff is complete
  const finalMatch = playoffRounds[playoffRounds.length - 1].matches[0];
@@ -1520,6 +1521,7 @@ function finishPlayoffMatch(roundIdx, matchIdx, winner) {
 }
 
 function showPlayoffWinner(winner) {
+ spawnArvidConfetti();
  const fin = document.getElementById('final-section');
  fin.classList.add('visible');
  const podium = document.getElementById('podium');
@@ -1748,7 +1750,6 @@ setCups = function(matchId, side, cups) {
  _reactSetCups(matchId, side, cups);
  if (m.done && !wasDone) {
    spawnArvidConfetti();
-   setTimeout(() => showArvidReact('party'), 800);
  }
 };
 
