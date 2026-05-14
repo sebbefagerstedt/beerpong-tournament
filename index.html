@@ -1780,7 +1780,7 @@ function showVictoryReact() {
  bubble.textContent = ['VINNARE!','LEGEND!','GG!','SKÖÖÖNT!'][Math.floor(Math.random()*4)];
  el.classList.add('visible');
  clearTimeout(reactTimeout);
- const duration = victoryVideoSrc ? 6000 : 3500;
+ const duration = victoryVideoSrc ? 1500 : 3500;
  reactTimeout = setTimeout(() => { el.classList.remove('visible'); videoEl.pause(); videoEl.style.display = 'none'; }, duration);
 }
 
@@ -1883,7 +1883,7 @@ function showRoomBanner() {
  const pinWrap = document.getElementById('room-pin-wrap');
  if (isHost) {
    pinWrap.style.display = '';
-   pinWrap.innerHTML = `Värd-PIN: <span class="room-code">${roomPin}</span> · Åskådar-PIN: <span class="room-code" id="room-view-pin-display"></span>`;
+   pinWrap.innerHTML = `Värd-PIN: <span class="room-code">${roomPin}</span>  Åskådar-PIN: <span class="room-code" id="room-view-pin-display"></span>`;
    get(ref(db, 'rooms/' + roomId + '/viewPin')).then(snap => {
      const el = document.getElementById('room-view-pin-display');
      if (el && snap.exists()) el.textContent = snap.val();
