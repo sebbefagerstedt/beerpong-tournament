@@ -360,7 +360,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 }
 
 /* Arvid background fade */
-.arvid-bg-fade {
+/* .arvid-bg-fade {
  position: fixed; pointer-events: none; z-index: 0;
  opacity: 0; object-fit: cover; border-radius: 8px;
  filter: grayscale(0.5) brightness(0.4);
@@ -371,7 +371,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
  30% { opacity: 0.12; transform: scale(1); }
  70% { opacity: 0.12; transform: scale(1.02); }
  100% { opacity: 0; transform: scale(1.05); }
-}
+} */
 
 /* Arvid confetti (image pieces) */
 .arvid-confetti {
@@ -1682,18 +1682,18 @@ function spawnFloatingArvid() {
 setInterval(spawnFloatingArvid, 12000);
 
 // 2. Background fade - subtle large image appears
-function spawnBgArvid() {
- const src = randomArvid();
- if (!src) return;
- const img = document.createElement('img');
- img.src = src;
- img.className = 'arvid-bg-fade';
- const size = 200 + Math.random() * 200;
- img.style.cssText = `width:${size}px;height:${size}px;top:${10+Math.random()*60}%;left:${5+Math.random()*70}%;`;
- document.body.appendChild(img);
- img.addEventListener('animationend', () => img.remove());
-}
-setInterval(spawnBgArvid, 25000);
+// function spawnBgArvid() {
+//  const src = randomArvid();
+//  if (!src) return;
+//  const img = document.createElement('img');
+//  img.src = src;
+//  img.className = 'arvid-bg-fade';
+//  const size = 200 + Math.random() * 200;
+//  img.style.cssText = `width:${size}px;height:${size}px;top:${10+Math.random()*60}%;left:${5+Math.random()*70}%;`;
+//  document.body.appendChild(img);
+//  img.addEventListener('animationend', () => img.remove());
+// }
+// setInterval(spawnBgArvid, 25000);
 
 // 3. Arvid confetti on goals - hook into setCups
 const _origSetCups = setCups;
