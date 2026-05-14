@@ -345,6 +345,62 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 .playoff-team-item:hover { border-color: var(--amber); }
 .playoff-team-item.selected { border-color: var(--green); background: rgba(57,211,83,0.08); }
 .playoff-team-item .badge-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Arvid floating images */
+.arvid-float {
+ position: fixed; pointer-events: none; z-index: 40;
+ border-radius: 50%; object-fit: cover; opacity: 0;
+ animation: arvidFloat linear forwards;
+}
+@keyframes arvidFloat {
+ 0% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.5); }
+ 10% { opacity: 0.85; transform: translateY(-5vh) rotate(5deg) scale(1); }
+ 90% { opacity: 0.85; transform: translateY(-85vh) rotate(25deg) scale(1); }
+ 100% { opacity: 0; transform: translateY(-100vh) rotate(35deg) scale(0.5); }
+}
+
+/* Arvid background fade */
+.arvid-bg-fade {
+ position: fixed; pointer-events: none; z-index: 0;
+ opacity: 0; object-fit: cover; border-radius: 8px;
+ filter: grayscale(0.5) brightness(0.4);
+ animation: arvidBgFade 8s ease-in-out forwards;
+}
+@keyframes arvidBgFade {
+ 0% { opacity: 0; transform: scale(0.95); }
+ 30% { opacity: 0.12; transform: scale(1); }
+ 70% { opacity: 0.12; transform: scale(1.02); }
+ 100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* Arvid confetti (image pieces) */
+.arvid-confetti {
+ position: absolute; pointer-events: none; border-radius: 50%;
+ object-fit: cover; animation: arvidConfettiFall linear forwards;
+}
+@keyframes arvidConfettiFall {
+ 0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+ 100% { transform: translateY(110vh) rotate(540deg) scale(0.4); opacity: 0; }
+}
+
+/* Arvid reacts */
+#arvid-react {
+ position: fixed; bottom: 50%; left: 50%; z-index: 200;
+ display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+ opacity: 0; transform: translate(-50%, 50%) scale(0.8);
+ transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+}
+#arvid-react.visible { opacity: 1; transform: translate(-50%, 50%) scale(1); }
+#arvid-react .react-emoji { font-size: 3rem; }
+#arvid-react img {
+ width: 70px; height: 70px; border-radius: 50%; object-fit: cover;
+ border: 2px solid var(--amber); box-shadow: 0 4px 20px rgba(245,166,35,0.3);
+}
+#arvid-react .react-bubble {
+ background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+ padding: 0.5rem 0.8rem; font-size: 0.75rem; max-width: 160px;
+ color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
 </style>
 </head>
 <body>
@@ -499,6 +555,7 @@ box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 </div>
 
 <div class="confetti-wrap" id="confetti-wrap"></div>
+<div id="arvid-react"><img src="" alt="Arvid"><span class="react-emoji"></span><div class="react-bubble"></div></div>
 
 <script>
 const TEAM_COLORS = [
@@ -1580,6 +1637,139 @@ doReset = function() {
  playoffActive = false;
  document.getElementById('playoff-section').classList.remove('visible');
  _origDoReset();
+};
+
+// === ARVID IMAGES ===
+const ARVID_IMAGES = [
+ ...Array.from({length: 10}, (_, i) => `images/arvid${i+1}.jpg`),
+ ...Array.from({length: 10}, (_, i) => `images/arvid${i+1}.svg`),
+ ...Array.from({length: 10}, (_, i) => `images/arvid${i+1}.png`)
+];
+const arvidLoaded = [];
+
+// Preload and detect which images exist
+ARVID_IMAGES.forEach(src => {
+ const img = new Image();
+ img.onload = () => arvidLoaded.push(src);
+ img.src = src;
+});
+
+function randomArvid() {
+ return arvidLoaded.length ? arvidLoaded[Math.floor(Math.random() * arvidLoaded.length)] : null;
+}
+
+// 1. Floating Arvid images - spawn periodically
+function spawnFloatingArvid() {
+ const src = randomArvid();
+ if (!src) return;
+ const img = document.createElement('img');
+ img.src = src;
+ img.className = 'arvid-float';
+ const size = 50 + Math.random() * 60;
+ img.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*90}vw;bottom:-${size}px;animation-duration:${10+Math.random()*8}s;`;
+ document.body.appendChild(img);
+ img.addEventListener('animationend', () => img.remove());
+}
+setInterval(spawnFloatingArvid, 12000);
+
+// 2. Background fade - subtle large image appears
+function spawnBgArvid() {
+ const src = randomArvid();
+ if (!src) return;
+ const img = document.createElement('img');
+ img.src = src;
+ img.className = 'arvid-bg-fade';
+ const size = 200 + Math.random() * 200;
+ img.style.cssText = `width:${size}px;height:${size}px;top:${10+Math.random()*60}%;left:${5+Math.random()*70}%;`;
+ document.body.appendChild(img);
+ img.addEventListener('animationend', () => img.remove());
+}
+setInterval(spawnBgArvid, 25000);
+
+// 3. Arvid confetti on goals - hook into setCups
+const _origSetCups = setCups;
+setCups = function(matchId, side, cups) {
+ const m = matches[matchId];
+ const prevA = m.cupsA, prevB = m.cupsB;
+ _origSetCups(matchId, side, cups);
+ const scored = (side === 'a' && m.cupsA > prevA) || (side === 'b' && m.cupsB > prevB);
+ if (scored) spawnArvidConfetti();
+};
+
+function spawnArvidConfetti() {
+ if (!arvidLoaded.length) return;
+ const wrap = document.getElementById('confetti-wrap');
+ for (let i = 0; i < 15; i++) {
+ const img = document.createElement('img');
+ img.src = randomArvid();
+ img.className = 'arvid-confetti';
+ const size = 25 + Math.random() * 30;
+ img.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}vw;top:-${size}px;animation-duration:${2.5+Math.random()*2.5}s;animation-delay:${Math.random()*1}s;`;
+ wrap.appendChild(img);
+ img.addEventListener('animationend', () => img.remove());
+ }
+}
+
+// 4. Arvid Reacts – vid vinst, halvtid, 1 min kvar
+const REACTIONS = {
+ happy: { img: 'images/reactions/happy.png', fallback: '🍻', texts: ['HALVTID!','Gransen!','Vilken match!'] },
+ shocked: { img: 'images/reactions/shocked.png', fallback: '😱', texts: ['1 MINUT KVAR! ⏰','Stressa på!','Tick tock!'] },
+ party: { img: 'images/reactions/party.png', fallback: '🎉', texts: ['PARTY!','VINNARE!','LEGEND!'] }
+};
+const reactionLoaded = {};
+Object.entries(REACTIONS).forEach(([key, r]) => {
+ const img = new Image();
+ img.onload = () => { reactionLoaded[key] = true; };
+ img.src = r.img;
+});
+
+let reactTimeout = null;
+function showArvidReact(type) {
+ const el = document.getElementById('arvid-react');
+ const r = REACTIONS[type];
+ const imgEl = el.querySelector('img');
+ const emojiEl = el.querySelector('.react-emoji');
+ if (reactionLoaded[type]) {
+   imgEl.src = r.img; imgEl.style.display = ''; emojiEl.style.display = 'none';
+ } else {
+   emojiEl.textContent = r.fallback; emojiEl.style.display = ''; imgEl.style.display = 'none';
+ }
+ el.querySelector('.react-bubble').textContent = r.texts[Math.floor(Math.random() * r.texts.length)];
+ el.classList.add('visible');
+ clearTimeout(reactTimeout);
+ reactTimeout = setTimeout(() => el.classList.remove('visible'), 3500);
+}
+
+// React on match win + confetti
+const _reactSetCups = setCups;
+setCups = function(matchId, side, cups) {
+ const m = matches[matchId];
+ const wasDone = m.done;
+ _reactSetCups(matchId, side, cups);
+ if (m.done && !wasDone) {
+   spawnArvidConfetti();
+   setTimeout(() => showArvidReact('party'), 800);
+ }
+};
+
+// React at halftime and 1 min left
+const _origRenderTimer = renderMatchTimerStrip;
+const reactedHalf = {}, reactedOneMin = {};
+renderMatchTimerStrip = function(matchId) {
+ _origRenderTimer(matchId);
+ const m = matches[matchId];
+ if (!m.timerRunning || !m.timerStartedAt) return;
+ const elapsed = (Date.now() - m.timerStartedAt) / 1000;
+ const total = m.durationMinutes * 60;
+ const remaining = total - elapsed;
+ if (!reactedHalf[matchId] && elapsed >= total / 2) {
+   reactedHalf[matchId] = true;
+   showArvidReact('happy');
+ }
+ if (!reactedOneMin[matchId] && remaining <= 60 && remaining > 0) {
+   reactedOneMin[matchId] = true;
+   showArvidReact('shocked');
+ }
 };
 </script>
 
